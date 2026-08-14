@@ -1,0 +1,360 @@
+// ResumeIQ Database Schema
+// This is the single source of truth for all data models
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ============================================
+// Authentication & User Management
+// ============================================
+
+enum UserRole {
+  USER
+  ADMIN
+  PREMIUM
+}
+
+enum ResumeParseStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model User {
+  id       String @id @default(cuid())
+  email    String @unique
+  name     String
+  password String // bcrypt hashed
+
+  // Authorization & Account Status
+  role          UserRole @default(USER)
+  isActive      Boolean  @default(true)
+  emailVerified Boolean  @default(false)
+
+  // Account activity
+  lastLogin DateTime?
+
+  // Subscription management
+  subscription Subscription?
+
+  // User's resumes
+  resumes         Resume[]
+  jobDescriptions JobDescription[]
+
+  // Authentication
+  refreshTokens RefreshToken[]
+  auditLogs     AuditLog[]
+
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Token data (hashed)
+  token String @unique
+
+  // Status
+  isRevoked Boolean   @default(false)
+  revokedAt DateTime?
+  expiresAt DateTime
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+model Subscription {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  plan         String @default("free") // free, pro, enterprise
+  monthlyQuota Int    @default(5) // Free: 5 optimizations/month
+  usedQuota    Int    @default(0)
+
+  startedAt DateTime  @default(now())
+  expiresAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("subscriptions")
+}
+
+// ============================================
+// Resume Management
+// ============================================
+
+model Resume {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // File information
+  fileName String
+  fileSize Int // bytes
+  fileType String // pdf or docx
+
+  // Original file reference
+  originalFile OriginalFile?
+
+  // Parsing lifecycle
+  parseStatus    ResumeParseStatus @default(PENDING)
+  parseStartedAt DateTime?
+  parsedAt       DateTime?
+  parseError     String?
+
+  // Content extracted from original
+  extractedText   String? // Full text extracted from PDF/DOCX
+  extractedLayout String? // JSON: Layout metadata (sections, formatting)
+
+  // Resume versions (all optimizations)
+  versions ResumeVersion[]
+
+  // Soft delete tracking (TODO: implement after file upload verification)
+  // deletedAt DateTime?
+
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("resumes")
+}
+
+model OriginalFile {
+  id       String @id @default(cuid())
+  resumeId String @unique
+  resume   Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  // S3 storage location
+  s3Key String // s3://bucket/users/{userId}/originals/{resumeId}.pdf
+  s3Url String
+
+  uploadedAt DateTime @default(now())
+
+  @@map("original_files")
+}
+
+model ResumeVersion {
+  id       String @id @default(cuid())
+  resumeId String
+  resume   Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  // Version tracking
+  versionNumber    Int // 1, 2, 3...
+  optimizationType String // "conservative", "ats_focused", "recruiter_focused"
+
+  // Job description this was optimized for
+  jobDescription JobDescription? @relation("ResumeVersionToJobDescription")
+
+  // Optimized content
+  optimizedText String // Full optimized text
+  aiChanges     String // JSON: {section: [{original, optimized, reason}]}
+
+  // Validation results
+  isValid          Boolean @default(false)
+  validationErrors String? // JSON array of validation issues
+
+  // Output files
+  s3PdfUrl  String?
+  s3DocxUrl String?
+
+  // Scores
+  matchScore     Float // 0-100: How well resume matches JD
+  atsScore       Float // 0-100: ATS compatibility
+  recruiterScore Float // 0-100: How appealing to hiring manager
+  overallScore   Float // Weighted combination
+
+  // Metrics
+  metrics OptimizationMetrics?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([resumeId, versionNumber])
+  @@index([resumeId])
+  @@index([optimizationType])
+  @@map("resume_versions")
+}
+
+// ============================================
+// Job Description & Analysis
+// ============================================
+
+model JobDescription {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Link to resume version it was analyzed with (Phase 5: AI optimization)
+  resumeVersionId String?        @unique
+  resumeVersion   ResumeVersion? @relation("ResumeVersionToJobDescription", fields: [resumeVersionId], references: [id], onDelete: Cascade)
+
+  // Job information (raw input)
+  jobTitle    String
+  companyName String?
+  rawText     String // Full JD text from user
+
+  // Analysis lifecycle
+  analysisStatus String @default("pending") // pending | completed | failed
+
+  // Structured extraction results (JSON, populated after analysis)
+  extractedStructure String? // JSON: PersistedStructure
+
+  // Legacy flat arrays (kept for backward compatibility)
+  requiredSkills   String @default("[]") // JSON array
+  niceToHaveSkills String? // JSON array
+  certifications   String? // JSON array
+  domainKnowledge  String? // JSON array
+  softSkills       String? // JSON array
+
+  // Metadata
+  seniorityLevel String? // entry, mid, senior, lead, executive
+  industry       String?
+
+  // Match results (one per resume analyzed against this JD)
+  matchResults MatchResult[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([analysisStatus])
+  @@map("job_descriptions")
+}
+
+// ATS Match Results — one record per (resume, jobDescription) analysis
+model MatchResult {
+  id              String         @id @default(cuid())
+  userId          String
+  resumeId        String
+  jobDescriptionId String
+  jobDescription  JobDescription @relation(fields: [jobDescriptionId], references: [id], onDelete: Cascade)
+
+  // Score
+  overallScore        Float // 0-100
+  skillsScore         Float // 0-100
+  technologyScore     Float // 0-100
+  keywordsScore       Float // 0-100
+  experienceScore     Float // 0-100
+  educationScore      Float // 0-100
+  certificationScore  Float // 0-100
+  responsibilityScore Float // 0-100
+  interpretation      String // strong | good | fair | weak
+
+  // Full match detail (JSON)
+  matchData  String // JSON: PersistedMatchResult
+  scoreData  String // JSON: PersistedScoreData
+
+  // Reproducibility
+  scoringVersion String // e.g. "v1.0.0-deterministic"
+
+  analyzedAt DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([resumeId, jobDescriptionId])
+  @@index([userId])
+  @@index([resumeId])
+  @@index([jobDescriptionId])
+  @@map("match_results")
+}
+
+// ============================================
+// Optimization & Scoring
+// ============================================
+
+model OptimizationMetrics {
+  id        String        @id @default(cuid())
+  versionId String        @unique
+  version   ResumeVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+
+  // Keyword metrics
+  originalKeywordCount  Int
+  optimizedKeywordCount Int
+  addedKeywords         String // JSON array
+  removedKeywords       String // JSON array
+
+  // Readability metrics
+  avgReadabilityScore Float
+  sentenceVariety     Float // 0-100: Variety in sentence length
+
+  // ATS metrics
+  atsCompatibilityScore Float
+  atsBreakingElements   String? // JSON: Issues that break ATS
+
+  // Recruiter metrics
+  recruiterReadinessScore Float
+  impactEmphasisScore     Float // How much metrics/impact shown
+
+  calculatedAt DateTime @default(now())
+
+  @@map("optimization_metrics")
+}
+
+// ============================================
+// Logging & Analytics
+// ============================================
+
+model ApiUsageLog {
+  id     String  @id @default(cuid())
+  userId String? // null for unauthenticated requests
+
+  endpoint       String // e.g., "/api/resumes/parse"
+  method         String // GET, POST, etc
+  statusCode     Int
+  responseTimeMs Int
+
+  // AI usage tracking
+  tokensUsed Int? // For LLM calls
+  costUsd    Float? // Approximate cost
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([endpoint])
+  @@index([createdAt])
+  @@map("api_usage_logs")
+}
+
+// ============================================
+// Audit & Compliance
+// ============================================
+
+model AuditLog {
+  id     String @id @default(cuid())
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  action     String // LOGIN_SUCCESS, LOGIN_FAILURE, LOGOUT, REGISTER, PASSWORD_CHANGE, "upload", "optimize", "download", "delete"
+  status     String // SUCCESS, FAILURE
+  reason     String? // Why failed (invalid password, account locked, etc.) or details
+  resource   String? // "resume", "version", etc (for non-auth operations)
+  resourceId String?
+
+  ipAddress String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
