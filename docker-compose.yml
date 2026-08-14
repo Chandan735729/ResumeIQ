@@ -1,0 +1,60 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: resumeiq_postgres
+    environment:
+      POSTGRES_USER: resumeiq_user
+      POSTGRES_PASSWORD: resumeiq_pass
+      POSTGRES_DB: resumeiq
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U resumeiq_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: resumeiq_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: resumeiq_backend
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://resumeiq_user:resumeiq_pass@postgres:5432/resumeiq"
+      REDIS_URL: "redis://redis:6379"
+      NODE_ENV: development
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set in the host environment}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend/src:/app/src
+      - ./backend/prisma:/app/prisma
+      - ./backend/storage:/app/storage
+    command: sh -c "npx prisma migrate deploy && npm run dev"
+
+volumes:
+  postgres_data:
+  redis_data:

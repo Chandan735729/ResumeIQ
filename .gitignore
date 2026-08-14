@@ -1,0 +1,97 @@
+# ==============================================================================
+# ResumeIQ — Comprehensive Git Ignore Rules
+# ==============================================================================
+
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Environment and Secrets (Preserve templates only)
+.env
+.env.*
+!.env.example
+!.env.template
+!.env.sample
+
+# Build Output & Bundles
+dist/
+**/dist/
+build/
+**/build/
+out/
+.next/
+.vite/
+coverage/
+**/coverage/
+
+# Runtime & Application Logs
+logs/
+**/logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+docker_build_log.txt
+
+# Temporary & Swap Files
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+
+# Local Databases, Volume Mounts & Backups
+*.db
+*.sqlite
+*.sqlite3
+*.dump
+backups/
+backup/
+local-db/
+postgresql_data/
+redis_data/
+
+# OS-Specific Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE & Editor Metadata
+.vscode/
+.idea/
+*.iml
+*.sublime-*
+
+# OS & Package Manager Lock Artifacts
+*.lock.tmp
+
+# Build & Tooling Caches
+.cache/
+.parcel-cache/
+.turbo/
+
+# Test Reports & Traces
+playwright-report/
+test-results/
+
+# Uploaded User Documents & Ephemeral Storage
+storage/
+**/storage/
+uploads/
+**/uploads/
+user-data/
+test_reconciliation_storage/
+storage_ci/
+
+# Python & Virtual Environments
+.venv/
+venv/
+__pycache__/
+
+# Certificates & Private Keys
+*.pem
+*.key
+*.p12
+*.pfx
