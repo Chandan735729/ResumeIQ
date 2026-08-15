@@ -1,0 +1,1197 @@
+﻿Warning: Ignoring invalid character "19" in hex string
+Warning: Ignoring invalid character "2" in hex string
+Warning: Ignoring invalid character "254" in hex string
+Warning: Ignoring invalid character "63" in hex string
+Warning: Ignoring invalid character "246" in hex string
+Warning: Ignoring invalid character "236" in hex string
+Warning: Ignoring invalid character "113" in hex string
+Warning: Ignoring invalid character "195" in hex string
+Warning: Ignoring invalid character "221" in hex string
+Warning: Ignoring invalid character "156" in hex string
+Warning: Ignoring invalid character "96" in hex string
+Warning: Ignoring invalid character "16" in hex string
+Warning: Ignoring invalid character "90" in hex string
+Warning: Ignoring invalid character "109" in hex string
+Warning: Ignoring invalid character "253" in hex string
+Warning: Ignoring invalid character "40" in hex string
+Warning: Ignoring invalid character "151" in hex string
+Warning: Ignoring invalid character "93" in hex string
+Warning: Ignoring invalid character "106" in hex string
+Warning: Ignoring invalid character "212" in hex string
+Warning: Ignoring invalid character "30" in hex string
+Warning: Ignoring invalid character "184" in hex string
+Warning: Ignoring invalid character "81" in hex string
+Warning: Ignoring invalid character "139" in hex string
+Warning: Ignoring invalid character "46" in hex string
+Warning: Ignoring invalid character "109" in hex string
+Warning: Ignoring invalid character "250" in hex string
+Warning: Ignoring invalid character "126" in hex string
+Warning: Ignoring invalid character "249" in hex string
+Warning: Ignoring invalid character "113" in hex string
+Warning: Ignoring invalid character "225" in hex string
+Warning: Ignoring invalid character "87" in hex string
+Warning: Ignoring invalid character "107" in hex string
+Warning: Ignoring invalid character "31" in hex string
+Warning: Ignoring invalid character "110" in hex string
+Warning: Ignoring invalid character "247" in hex string
+Warning: Ignoring invalid character "110" in hex string
+Warning: Ignoring invalid character "78" in hex string
+Warning: Ignoring invalid character "45" in hex string
+Warning: Ignoring invalid character "212" in hex string
+Warning: Ignoring invalid character "222" in hex string
+Warning: Ignoring invalid character "210" in hex string
+Warning: Ignoring invalid character "110" in hex string
+Warning: Ignoring invalid character "223" in hex string
+Warning: Ignoring invalid character "47" in hex string
+Warning: Ignoring invalid character "239" in hex string
+Warning: Ignoring invalid character "63" in hex string
+Warning: Ignoring invalid character "113" in hex string
+Warning: Ignoring invalid character "106" in hex string
+Warning: Ignoring invalid character "183" in hex string
+Warning: Ignoring invalid character "245" in hex string
+Warning: Ignoring invalid character "242" in hex string
+Warning: Ignoring invalid character "245" in hex string
+Warning: Ignoring invalid character "234" in hex string
+Warning: Ignoring invalid character "138" in hex string
+Warning: Ignoring invalid character "8" in hex string
+Warning: Ignoring invalid character "3" in hex string
+Warning: Ignoring invalid character "58" in hex string
+Warning: Ignoring invalid character "88" in hex string
+Warning: Ignoring invalid character "200" in hex string
+Warning: Ignoring invalid character "38" in hex string
+Warning: Ignoring invalid character "124" in hex string
+Warning: Ignoring invalid character "108" in hex string
+Warning: Ignoring invalid character "244" in hex string
+Warning: Ignoring invalid character "173" in hex string
+Warning: Ignoring invalid character "221" in hex string
+Warning: Setting up fake worker.
+(while reading XRef): Error: Invalid XRef stream header
+Error: Error: Error: Invalid XRef stream header
+    at error (C:\Users\CHANDAN\PROJECTS_CHANDAN\ResumeIQ\backend\node_modules\pdf2json\lib\pdfjs-code.js:206:8)
+    at e.apply (C:\Users\CHANDAN\PROJECTS_CHANDAN\ResumeIQ\backend\node_modules\pdf2json\lib\pdfjs-code.js:4576:9)
+    at ensure (C:\Users\CHANDAN\PROJECTS_CHANDAN\ResumeIQ\backend\node_modules\pdf2json\lib\pdfjs-code.js:32767:24)
+    at ensureModel (C:\Users\CHANDAN\PROJECTS_CHANDAN\ResumeIQ\backend\node_modules\pdf2json\lib\pdfjs-code.js:32703:19)
+    at Object.onResolve (C:\Users\CHANDAN\PROJECTS_CHANDAN\ResumeIQ\backend\node_modules\pdf2json\lib\pdfjs-code.js:27377:8)
+    at Object.runHandlers (C:\Users\CHANDAN\PROJECTS_CHANDAN\ResumeIQ\backend\node_modules\pdf2json\lib\pdfjs-code.js:889:28)
+    at listOnTimeout (node:internal/timers:594:17)
+    at processTimers (node:internal/timers:529:7)
+Warning: Setting up fake worker.
+Warning: Setting up fake worker.
+Warning: Setting up fake worker.
+Warning: Setting up fake worker.
+Warning: Setting up fake worker.
+Warning: Setting up fake worker.
+Warning: Setting up fake worker.
+Warning: TT: complementing a missing function tail
+Warning: TT: complementing a missing function tail
+Warning: Unsupported: field.type of Link
+Warning: NOT valid form element
+Warning: Unsupported: field.type of Link
+Warning: NOT valid form element
+Warning: Unsupported: field.type of Link
+Warning: NOT valid form element
+Warning: Unsupported: field.type of Link
+Warning: NOT valid form element
+Warning: Setting up fake worker.
+Warning: Unsupported: field.type of Link
+Warning: NOT valid form element
+Warning: Unsupported: field.type of Link
+Warning: NOT valid form element
+Warning: Unsupported: field.type of Link
+Warning: NOT valid form element
+Warning: Unsupported: field.type of Link
+Warning: NOT valid form element
+Warning: Unsupported: field.type of Link
+Warning: NOT valid form element
+Warning: Unsupported: field.type of Link
+Warning: NOT valid form element
+Warning: Unsupported: field.type of Link
+Warning: NOT valid form element
+Warning: Unsupported: field.type of Link
+Warning: NOT valid form element
+Warning: Unsupported: field.type of Link
+Warning: NOT valid form element
+Warning: Unsupported: field.type of Link
+Warning: NOT valid form element
+Warning: Unsupported: field.type of Link
+Warning: NOT valid form element
+Warning: Unsupported: field.type of Link
+Warning: NOT valid form element
+Warning: Unsupported: field.type of Link
+Warning: NOT valid form element
+Warning: Unsupported: field.type of Link
+Warning: NOT valid form element
+Warning: Unsupported: field.type of Link
+Warning: NOT valid form element
+Warning: Setting up fake worker.
+Warning: Unsupported: field.type of Link
+Warning: NOT valid form element
+Warning: Unsupported: field.type of Link
+Warning: NOT valid form element
+Warning: Unsupported: field.type of Link
+Warning: NOT valid form element
+Warning: Unsupported: field.type of Link
+Warning: NOT valid form element
+Warning: Unsupported: field.type of Link
+Warning: NOT valid form element
+Warning: Unsupported: field.type of Link
+Warning: NOT valid form element
+Warning: Unsupported: field.type of Link
+Warning: NOT valid form element
+Warning: Unsupported: field.type of Link
+Warning: NOT valid form element
+Warning: Unsupported: field.type of Link
+Warning: NOT valid form element
+Warning: Unsupported: field.type of Link
+Warning: NOT valid form element
+Warning: Unsupported: field.type of Link
+Warning: NOT valid form element
+Warning: Unsupported: field.type of Link
+Warning: NOT valid form element
+Warning: Unsupported: field.type of Link
+Warning: NOT valid form element
+Warning: Unsupported: field.type of Link
+Warning: NOT valid form element
+Warning: Unsupported: field.type of Link
+Warning: NOT valid form element
+Warning: Unsupported: field.type of Link
+Warning: NOT valid form element
+Warning: Unsupported: field.type of Link
+Warning: NOT valid form element
+Error: Error: Command token too long: 128
+    at error (C:\Users\CHANDAN\PROJECTS_CHANDAN\ResumeIQ\backend\node_modules\pdfreader\node_modules\pdf2json\lib\pdfjs-code.js:206:8)
+    at e.apply (C:\Users\CHANDAN\PROJECTS_CHANDAN\ResumeIQ\backend\node_modules\pdfreader\node_modules\pdf2json\lib\pdfjs-code.js:4560:9)
+    at ensure (C:\Users\CHANDAN\PROJECTS_CHANDAN\ResumeIQ\backend\node_modules\pdfreader\node_modules\pdf2json\lib\pdfjs-code.js:32588:24)
+    at ensureModel (C:\Users\CHANDAN\PROJECTS_CHANDAN\ResumeIQ\backend\node_modules\pdfreader\node_modules\pdf2json\lib\pdfjs-code.js:32524:19)
+    at Object.onResolve (C:\Users\CHANDAN\PROJECTS_CHANDAN\ResumeIQ\backend\node_modules\pdfreader\node_modules\pdf2json\lib\pdfjs-code.js:27198:8)
+    at Object.runHandlers (C:\Users\CHANDAN\PROJECTS_CHANDAN\ResumeIQ\backend\node_modules\pdfreader\node_modules\pdf2json\lib\pdfjs-code.js:889:28)
+    at listOnTimeout (node:internal/timers:594:17)
+    at processTimers (node:internal/timers:529:7)
+Warning: Ignoring invalid character "2" in hex string
+Warning: Ignoring invalid character "254" in hex string
+Warning: Ignoring invalid character "63" in hex string
+Warning: Ignoring invalid character "246" in hex string
+Warning: Ignoring invalid character "236" in hex string
+Warning: Ignoring invalid character "113" in hex string
+Warning: Ignoring invalid character "195" in hex string
+Warning: Ignoring invalid character "221" in hex string
+Warning: Ignoring invalid character "156" in hex string
+Warning: Ignoring invalid character "96" in hex string
+Warning: Ignoring invalid character "16" in hex string
+Warning: Ignoring invalid character "90" in hex string
+Warning: Ignoring invalid character "109" in hex string
+Warning: Ignoring invalid character "253" in hex string
+Warning: Ignoring invalid character "40" in hex string
+Warning: Ignoring invalid character "151" in hex string
+Warning: Ignoring invalid character "93" in hex string
+Warning: Ignoring invalid character "106" in hex string
+Warning: Ignoring invalid character "212" in hex string
+Warning: Ignoring invalid character "30" in hex string
+Warning: Ignoring invalid character "184" in hex string
+Warning: Ignoring invalid character "81" in hex string
+Warning: Ignoring invalid character "139" in hex string
+Warning: Ignoring invalid character "46" in hex string
+Warning: Ignoring invalid character "109" in hex string
+Warning: Ignoring invalid character "250" in hex string
+Warning: Ignoring invalid character "126" in hex string
+Warning: Ignoring invalid character "249" in hex string
+Warning: Ignoring invalid character "113" in hex string
+Warning: Ignoring invalid character "225" in hex string
+Warning: Ignoring invalid character "87" in hex string
+Warning: Ignoring invalid character "107" in hex string
+Warning: Ignoring invalid character "31" in hex string
+Warning: Ignoring invalid character "110" in hex string
+Warning: Ignoring invalid character "247" in hex string
+Warning: Ignoring invalid character "110" in hex string
+Warning: Ignoring invalid character "78" in hex string
+Warning: Ignoring invalid character "45" in hex string
+Warning: Ignoring invalid character "212" in hex string
+Warning: Ignoring invalid character "222" in hex string
+Warning: Ignoring invalid character "210" in hex string
+Warning: Ignoring invalid character "110" in hex string
+Warning: Ignoring invalid character "223" in hex string
+Warning: Ignoring invalid character "47" in hex string
+Warning: Ignoring invalid character "239" in hex string
+Warning: Ignoring invalid character "63" in hex string
+Warning: Ignoring invalid character "113" in hex string
+Warning: Ignoring invalid character "106" in hex string
+Warning: Ignoring invalid character "183" in hex string
+Warning: Ignoring invalid character "245" in hex string
+Warning: Ignoring invalid character "242" in hex string
+Warning: Ignoring invalid character "245" in hex string
+Warning: Ignoring invalid character "234" in hex string
+Warning: Ignoring invalid character "138" in hex string
+Warning: Ignoring invalid character "8" in hex string
+Warning: Ignoring invalid character "3" in hex string
+Warning: Ignoring invalid character "58" in hex string
+Warning: Ignoring invalid character "88" in hex string
+Warning: Ignoring invalid character "200" in hex string
+Warning: Ignoring invalid character "38" in hex string
+Warning: Ignoring invalid character "124" in hex string
+Warning: Ignoring invalid character "108" in hex string
+Warning: Ignoring invalid character "244" in hex string
+Warning: Ignoring invalid character "173" in hex string
+Warning: Ignoring invalid character "221" in hex string
+2026-06-07 16:36:44:3644 [32minfo[39m: [32mParsed resume[39m
+2026-06-07 16:36:44:3644 [32minfo[39m: [32mParsed resume[39m
+2026-06-07 16:36:45:3645 [32minfo[39m: [32mParsed resume[39m
+2026-06-07 16:36:45:3645 [32minfo[39m: [32mParsed resume[39m
+2026-06-07 16:36:45:3645 [32minfo[39m: [32mParsed resume[39m
+2026-06-07 16:36:45:3645 [32minfo[39m: [32mParsed resume[39m
+2026-06-07 16:36:45:3645 [32minfo[39m: [32mParsed resume[39m
+2026-06-07 16:36:45:3645 [32minfo[39m: [32mParsed resume[39m
+2026-06-07 16:36:45:3645 [32minfo[39m: [32mParsed resume[39m
+2026-06-07 16:36:45:3645 [32minfo[39m: [32mParsed resume[39m
+2026-06-07 16:36:45:3645 [32minfo[39m: [32mParsed resume[39m
+{
+  "generatedAt": "2026-06-07T11:06:45.221Z",
+  "node": "v22.14.0",
+  "corpus": [
+    {
+      "fileName": "minimal-hello-world.pdf",
+      "bytes": 1285
+    },
+    {
+      "fileName": "fresher-resume.pdf",
+      "bytes": 1765
+    },
+    {
+      "fileName": "experienced-resume.pdf",
+      "bytes": 1894
+    },
+    {
+      "fileName": "multi-page-resume.pdf",
+      "bytes": 2758
+    },
+    {
+      "fileName": "multi-column-resume.pdf",
+      "bytes": 1796
+    },
+    {
+      "fileName": "erau-computing-resume.pdf",
+      "bytes": 24672
+    },
+    {
+      "fileName": "fau-engineering-resume.pdf",
+      "bytes": 106863
+    },
+    {
+      "fileName": "github-eric-thomas-resume.pdf",
+      "bytes": 84945
+    },
+    {
+      "fileName": "github-matthew-roberts-resume.pdf",
+      "bytes": 3862963
+    },
+    {
+      "fileName": "github-mo-sorkhpar-resume.pdf",
+      "bytes": 171956
+    }
+  ],
+  "librarySummary": [
+    {
+      "library": "pdf-parse@1.1.1 default",
+      "total": 10,
+      "passed": 6,
+      "avgMs": 24.45,
+      "avgMemoryKb": 2173.06,
+      "successRate": 60
+    },
+    {
+      "library": "pdf-parse@1.1.1 v1.10.100",
+      "total": 10,
+      "passed": 5,
+      "avgMs": 12.47,
+      "avgMemoryKb": 1381.49,
+      "successRate": 50
+    },
+    {
+      "library": "pdfjs-dist@6 custom",
+      "total": 10,
+      "passed": 9,
+      "avgMs": 46.49,
+      "avgMemoryKb": 5644.7,
+      "successRate": 90
+    },
+    {
+      "library": "pdf2json@4.0.3",
+      "total": 10,
+      "passed": 7,
+      "avgMs": 99.2,
+      "avgMemoryKb": 4640.37,
+      "successRate": 70
+    },
+    {
+      "library": "pdfreader@3.0.8",
+      "total": 10,
+      "passed": 7,
+      "avgMs": 90.14,
+      "avgMemoryKb": 24391.61,
+      "successRate": 70
+    },
+    {
+      "library": "pdf-extraction@1.0.2",
+      "total": 10,
+      "passed": 5,
+      "avgMs": 24.89,
+      "avgMemoryKb": 1588.23,
+      "successRate": 50
+    }
+  ],
+  "parserSummary": {
+    "total": 9,
+    "passed": 9,
+    "successRate": 100,
+    "avgMs": 24.39,
+    "avgMemoryKb": 159.33
+  },
+  "docxSummary": {
+    "total": 2,
+    "passed": 2,
+    "successRate": 100,
+    "avgMs": 7.67,
+    "avgMemoryKb": 1005.48
+  },
+  "libraryResults": [
+    {
+      "library": "pdf-parse@1.1.1 default",
+      "fileName": "minimal-hello-world.pdf",
+      "success": false,
+      "pages": 0,
+      "textLength": 0,
+      "matchedTokens": 0,
+      "expectedTokens": 4,
+      "elapsedMs": 54.05,
+      "memoryDeltaKb": 5228.38,
+      "error": "Command token too long: 128"
+    },
+    {
+      "library": "pdf-parse@1.1.1 default",
+      "fileName": "fresher-resume.pdf",
+      "success": true,
+      "pages": 1,
+      "textLength": 488,
+      "matchedTokens": 6,
+      "expectedTokens": 6,
+      "elapsedMs": 14.99,
+      "memoryDeltaKb": 2128.95
+    },
+    {
+      "library": "pdf-parse@1.1.1 default",
+      "fileName": "experienced-resume.pdf",
+      "success": false,
+      "pages": 0,
+      "textLength": 0,
+      "matchedTokens": 0,
+      "expectedTokens": 6,
+      "elapsedMs": 0.58,
+      "memoryDeltaKb": 128.54,
+      "error": "bad XRef entry"
+    },
+    {
+      "library": "pdf-parse@1.1.1 default",
+      "fileName": "multi-page-resume.pdf",
+      "success": false,
+      "pages": 0,
+      "textLength": 0,
+      "matchedTokens": 0,
+      "expectedTokens": 6,
+      "elapsedMs": 0.76,
+      "memoryDeltaKb": 132.86,
+      "error": "bad XRef entry"
+    },
+    {
+      "library": "pdf-parse@1.1.1 default",
+      "fileName": "multi-column-resume.pdf",
+      "success": true,
+      "pages": 1,
+      "textLength": 438,
+      "matchedTokens": 6,
+      "expectedTokens": 6,
+      "elapsedMs": 2.74,
+      "memoryDeltaKb": 755.75
+    },
+    {
+      "library": "pdf-parse@1.1.1 default",
+      "fileName": "erau-computing-resume.pdf",
+      "success": false,
+      "pages": 1,
+      "textLength": 2562,
+      "matchedTokens": 3,
+      "expectedTokens": 5,
+      "elapsedMs": 23.32,
+      "memoryDeltaKb": -4457.48
+    },
+    {
+      "library": "pdf-parse@1.1.1 default",
+      "fileName": "fau-engineering-resume.pdf",
+      "success": true,
+      "pages": 1,
+      "textLength": 2018,
+      "matchedTokens": 5,
+      "expectedTokens": 5,
+      "elapsedMs": 16.92,
+      "memoryDeltaKb": 6302.93
+    },
+    {
+      "library": "pdf-parse@1.1.1 default",
+      "fileName": "github-eric-thomas-resume.pdf",
+      "success": true,
+      "pages": 1,
+      "textLength": 4268,
+      "matchedTokens": 5,
+      "expectedTokens": 5,
+      "elapsedMs": 24.53,
+      "memoryDeltaKb": -5023.02
+    },
+    {
+      "library": "pdf-parse@1.1.1 default",
+      "fileName": "github-matthew-roberts-resume.pdf",
+      "success": true,
+      "pages": 3,
+      "textLength": 4612,
+      "matchedTokens": 5,
+      "expectedTokens": 5,
+      "elapsedMs": 70.35,
+      "memoryDeltaKb": 7658.16
+    },
+    {
+      "library": "pdf-parse@1.1.1 default",
+      "fileName": "github-mo-sorkhpar-resume.pdf",
+      "success": true,
+      "pages": 2,
+      "textLength": 9009,
+      "matchedTokens": 5,
+      "expectedTokens": 5,
+      "elapsedMs": 36.3,
+      "memoryDeltaKb": 8875.55
+    },
+    {
+      "library": "pdf-parse@1.1.1 v1.10.100",
+      "fileName": "minimal-hello-world.pdf",
+      "success": false,
+      "pages": 0,
+      "textLength": 0,
+      "matchedTokens": 0,
+      "expectedTokens": 4,
+      "elapsedMs": 0.38,
+      "memoryDeltaKb": 136.65,
+      "error": "bad XRef entry"
+    },
+    {
+      "library": "pdf-parse@1.1.1 v1.10.100",
+      "fileName": "fresher-resume.pdf",
+      "success": false,
+      "pages": 0,
+      "textLength": 0,
+      "matchedTokens": 0,
+      "expectedTokens": 6,
+      "elapsedMs": 0.21,
+      "memoryDeltaKb": 123.42,
+      "error": "bad XRef entry"
+    },
+    {
+      "library": "pdf-parse@1.1.1 v1.10.100",
+      "fileName": "experienced-resume.pdf",
+      "success": false,
+      "pages": 0,
+      "textLength": 0,
+      "matchedTokens": 0,
+      "expectedTokens": 6,
+      "elapsedMs": 0.14,
+      "memoryDeltaKb": 122.49,
+      "error": "bad XRef entry"
+    },
+    {
+      "library": "pdf-parse@1.1.1 v1.10.100",
+      "fileName": "multi-page-resume.pdf",
+      "success": true,
+      "pages": 2,
+      "textLength": 1061,
+      "matchedTokens": 6,
+      "expectedTokens": 6,
+      "elapsedMs": 2.64,
+      "memoryDeltaKb": -14228.88
+    },
+    {
+      "library": "pdf-parse@1.1.1 v1.10.100",
+      "fileName": "multi-column-resume.pdf",
+      "success": false,
+      "pages": 0,
+      "textLength": 0,
+      "matchedTokens": 0,
+      "expectedTokens": 6,
+      "elapsedMs": 0.87,
+      "memoryDeltaKb": 234.34,
+      "error": "bad XRef entry"
+    },
+    {
+      "library": "pdf-parse@1.1.1 v1.10.100",
+      "fileName": "erau-computing-resume.pdf",
+      "success": false,
+      "pages": 1,
+      "textLength": 2562,
+      "matchedTokens": 3,
+      "expectedTokens": 5,
+      "elapsedMs": 6.56,
+      "memoryDeltaKb": 4257.47
+    },
+    {
+      "library": "pdf-parse@1.1.1 v1.10.100",
+      "fileName": "fau-engineering-resume.pdf",
+      "success": true,
+      "pages": 1,
+      "textLength": 2018,
+      "matchedTokens": 5,
+      "expectedTokens": 5,
+      "elapsedMs": 9.69,
+      "memoryDeltaKb": 4674.8
+    },
+    {
+      "library": "pdf-parse@1.1.1 v1.10.100",
+      "fileName": "github-eric-thomas-resume.pdf",
+      "success": true,
+      "pages": 1,
+      "textLength": 4268,
+      "matchedTokens": 5,
+      "expectedTokens": 5,
+      "elapsedMs": 10.8,
+      "memoryDeltaKb": 6386.42
+    },
+    {
+      "library": "pdf-parse@1.1.1 v1.10.100",
+      "fileName": "github-matthew-roberts-resume.pdf",
+      "success": true,
+      "pages": 3,
+      "textLength": 4612,
+      "matchedTokens": 5,
+      "expectedTokens": 5,
+      "elapsedMs": 56.66,
+      "memoryDeltaKb": 5997.48
+    },
+    {
+      "library": "pdf-parse@1.1.1 v1.10.100",
+      "fileName": "github-mo-sorkhpar-resume.pdf",
+      "success": true,
+      "pages": 2,
+      "textLength": 9009,
+      "matchedTokens": 5,
+      "expectedTokens": 5,
+      "elapsedMs": 36.77,
+      "memoryDeltaKb": 6110.74
+    },
+    {
+      "library": "pdfjs-dist@6 custom",
+      "fileName": "minimal-hello-world.pdf",
+      "success": true,
+      "pages": 1,
+      "textLength": 22,
+      "matchedTokens": 4,
+      "expectedTokens": 4,
+      "elapsedMs": 196.21,
+      "memoryDeltaKb": 38994.15
+    },
+    {
+      "library": "pdfjs-dist@6 custom",
+      "fileName": "fresher-resume.pdf",
+      "success": true,
+      "pages": 1,
+      "textLength": 488,
+      "matchedTokens": 6,
+      "expectedTokens": 6,
+      "elapsedMs": 8.14,
+      "memoryDeltaKb": 636.55
+    },
+    {
+      "library": "pdfjs-dist@6 custom",
+      "fileName": "experienced-resume.pdf",
+      "success": true,
+      "pages": 1,
+      "textLength": 639,
+      "matchedTokens": 6,
+      "expectedTokens": 6,
+      "elapsedMs": 4.17,
+      "memoryDeltaKb": 2607.05
+    },
+    {
+      "library": "pdfjs-dist@6 custom",
+      "fileName": "multi-page-resume.pdf",
+      "success": true,
+      "pages": 2,
+      "textLength": 1061,
+      "matchedTokens": 6,
+      "expectedTokens": 6,
+      "elapsedMs": 6.21,
+      "memoryDeltaKb": 1989.78
+    },
+    {
+      "library": "pdfjs-dist@6 custom",
+      "fileName": "multi-column-resume.pdf",
+      "success": true,
+      "pages": 1,
+      "textLength": 438,
+      "matchedTokens": 6,
+      "expectedTokens": 6,
+      "elapsedMs": 3.16,
+      "memoryDeltaKb": 1013.81
+    },
+    {
+      "library": "pdfjs-dist@6 custom",
+      "fileName": "erau-computing-resume.pdf",
+      "success": false,
+      "pages": 1,
+      "textLength": 2568,
+      "matchedTokens": 3,
+      "expectedTokens": 5,
+      "elapsedMs": 28.63,
+      "memoryDeltaKb": -2897.74
+    },
+    {
+      "library": "pdfjs-dist@6 custom",
+      "fileName": "fau-engineering-resume.pdf",
+      "success": true,
+      "pages": 1,
+      "textLength": 2022,
+      "matchedTokens": 5,
+      "expectedTokens": 5,
+      "elapsedMs": 20.94,
+      "memoryDeltaKb": 7737.95
+    },
+    {
+      "library": "pdfjs-dist@6 custom",
+      "fileName": "github-eric-thomas-resume.pdf",
+      "success": true,
+      "pages": 1,
+      "textLength": 4295,
+      "matchedTokens": 5,
+      "expectedTokens": 5,
+      "elapsedMs": 34.93,
+      "memoryDeltaKb": -1711.53
+    },
+    {
+      "library": "pdfjs-dist@6 custom",
+      "fileName": "github-matthew-roberts-resume.pdf",
+      "success": true,
+      "pages": 3,
+      "textLength": 3829,
+      "matchedTokens": 5,
+      "expectedTokens": 5,
+      "elapsedMs": 118.4,
+      "memoryDeltaKb": 9987.27
+    },
+    {
+      "library": "pdfjs-dist@6 custom",
+      "fileName": "github-mo-sorkhpar-resume.pdf",
+      "success": true,
+      "pages": 2,
+      "textLength": 9009,
+      "matchedTokens": 5,
+      "expectedTokens": 5,
+      "elapsedMs": 44.11,
+      "memoryDeltaKb": -1910.27
+    },
+    {
+      "library": "pdf2json@4.0.3",
+      "fileName": "minimal-hello-world.pdf",
+      "success": false,
+      "pages": 0,
+      "textLength": 0,
+      "matchedTokens": 0,
+      "expectedTokens": 4,
+      "elapsedMs": 76.48,
+      "memoryDeltaKb": 29555.98,
+      "error": "Error: Error: Invalid XRef stream header"
+    },
+    {
+      "library": "pdf2json@4.0.3",
+      "fileName": "fresher-resume.pdf",
+      "success": true,
+      "pages": 1,
+      "textLength": 488,
+      "matchedTokens": 6,
+      "expectedTokens": 6,
+      "elapsedMs": 23.8,
+      "memoryDeltaKb": 1283.68
+    },
+    {
+      "library": "pdf2json@4.0.3",
+      "fileName": "experienced-resume.pdf",
+      "success": true,
+      "pages": 1,
+      "textLength": 639,
+      "matchedTokens": 6,
+      "expectedTokens": 6,
+      "elapsedMs": 7.69,
+      "memoryDeltaKb": 926.66
+    },
+    {
+      "library": "pdf2json@4.0.3",
+      "fileName": "multi-page-resume.pdf",
+      "success": true,
+      "pages": 2,
+      "textLength": 1061,
+      "matchedTokens": 6,
+      "expectedTokens": 6,
+      "elapsedMs": 29.58,
+      "memoryDeltaKb": 1162.84
+    },
+    {
+      "library": "pdf2json@4.0.3",
+      "fileName": "multi-column-resume.pdf",
+      "success": true,
+      "pages": 1,
+      "textLength": 438,
+      "matchedTokens": 6,
+      "expectedTokens": 6,
+      "elapsedMs": 15.99,
+      "memoryDeltaKb": 705.79
+    },
+    {
+      "library": "pdf2json@4.0.3",
+      "fileName": "erau-computing-resume.pdf",
+      "success": false,
+      "pages": 1,
+      "textLength": 2622,
+      "matchedTokens": 3,
+      "expectedTokens": 5,
+      "elapsedMs": 28.26,
+      "memoryDeltaKb": 3813.2
+    },
+    {
+      "library": "pdf2json@4.0.3",
+      "fileName": "fau-engineering-resume.pdf",
+      "success": true,
+      "pages": 1,
+      "textLength": 2039,
+      "matchedTokens": 5,
+      "expectedTokens": 5,
+      "elapsedMs": 30.06,
+      "memoryDeltaKb": 6681.28
+    },
+    {
+      "library": "pdf2json@4.0.3",
+      "fileName": "github-eric-thomas-resume.pdf",
+      "success": true,
+      "pages": 1,
+      "textLength": 4295,
+      "matchedTokens": 5,
+      "expectedTokens": 5,
+      "elapsedMs": 59.71,
+      "memoryDeltaKb": 18169.81
+    },
+    {
+      "library": "pdf2json@4.0.3",
+      "fileName": "github-matthew-roberts-resume.pdf",
+      "success": true,
+      "pages": 3,
+      "textLength": 4641,
+      "matchedTokens": 5,
+      "expectedTokens": 5,
+      "elapsedMs": 484.76,
+      "memoryDeltaKb": 146095.99
+    },
+    {
+      "library": "pdf2json@4.0.3",
+      "fileName": "github-mo-sorkhpar-resume.pdf",
+      "success": false,
+      "pages": 2,
+      "textLength": 15955,
+      "matchedTokens": 2,
+      "expectedTokens": 5,
+      "elapsedMs": 235.65,
+      "memoryDeltaKb": -161991.51
+    },
+    {
+      "library": "pdfreader@3.0.8",
+      "fileName": "minimal-hello-world.pdf",
+      "success": false,
+      "pages": 0,
+      "textLength": 0,
+      "matchedTokens": 0,
+      "expectedTokens": 4,
+      "elapsedMs": 67.99,
+      "memoryDeltaKb": 33221.68,
+      "error": "[object Object]"
+    },
+    {
+      "library": "pdfreader@3.0.8",
+      "fileName": "fresher-resume.pdf",
+      "success": true,
+      "pages": 1,
+      "textLength": 488,
+      "matchedTokens": 6,
+      "expectedTokens": 6,
+      "elapsedMs": 20.05,
+      "memoryDeltaKb": 1219.32
+    },
+    {
+      "library": "pdfreader@3.0.8",
+      "fileName": "experienced-resume.pdf",
+      "success": true,
+      "pages": 1,
+      "textLength": 639,
+      "matchedTokens": 6,
+      "expectedTokens": 6,
+      "elapsedMs": 5.9,
+      "memoryDeltaKb": 949.49
+    },
+    {
+      "library": "pdfreader@3.0.8",
+      "fileName": "multi-page-resume.pdf",
+      "success": true,
+      "pages": 2,
+      "textLength": 1061,
+      "matchedTokens": 6,
+      "expectedTokens": 6,
+      "elapsedMs": 29.09,
+      "memoryDeltaKb": 1163.87
+    },
+    {
+      "library": "pdfreader@3.0.8",
+      "fileName": "multi-column-resume.pdf",
+      "success": true,
+      "pages": 1,
+      "textLength": 438,
+      "matchedTokens": 6,
+      "expectedTokens": 6,
+      "elapsedMs": 16.57,
+      "memoryDeltaKb": 722.91
+    },
+    {
+      "library": "pdfreader@3.0.8",
+      "fileName": "erau-computing-resume.pdf",
+      "success": false,
+      "pages": 1,
+      "textLength": 2622,
+      "matchedTokens": 3,
+      "expectedTokens": 5,
+      "elapsedMs": 43.54,
+      "memoryDeltaKb": 11158.44
+    },
+    {
+      "library": "pdfreader@3.0.8",
+      "fileName": "fau-engineering-resume.pdf",
+      "success": true,
+      "pages": 1,
+      "textLength": 2039,
+      "matchedTokens": 5,
+      "expectedTokens": 5,
+      "elapsedMs": 26.31,
+      "memoryDeltaKb": 1054.49
+    },
+    {
+      "library": "pdfreader@3.0.8",
+      "fileName": "github-eric-thomas-resume.pdf",
+      "success": true,
+      "pages": 1,
+      "textLength": 4295,
+      "matchedTokens": 5,
+      "expectedTokens": 5,
+      "elapsedMs": 60.34,
+      "memoryDeltaKb": 17370.15
+    },
+    {
+      "library": "pdfreader@3.0.8",
+      "fileName": "github-matthew-roberts-resume.pdf",
+      "success": true,
+      "pages": 3,
+      "textLength": 4641,
+      "matchedTokens": 5,
+      "expectedTokens": 5,
+      "elapsedMs": 452.84,
+      "memoryDeltaKb": 146405.82
+    },
+    {
+      "library": "pdfreader@3.0.8",
+      "fileName": "github-mo-sorkhpar-resume.pdf",
+      "success": false,
+      "pages": 2,
+      "textLength": 15955,
+      "matchedTokens": 2,
+      "expectedTokens": 5,
+      "elapsedMs": 178.76,
+      "memoryDeltaKb": 30649.94
+    },
+    {
+      "library": "pdf-extraction@1.0.2",
+      "fileName": "minimal-hello-world.pdf",
+      "success": false,
+      "pages": 0,
+      "textLength": 0,
+      "matchedTokens": 0,
+      "expectedTokens": 4,
+      "elapsedMs": 52.02,
+      "memoryDeltaKb": 4347.63,
+      "error": "Illegal character: 41"
+    },
+    {
+      "library": "pdf-extraction@1.0.2",
+      "fileName": "fresher-resume.pdf",
+      "success": false,
+      "pages": 0,
+      "textLength": 0,
+      "matchedTokens": 0,
+      "expectedTokens": 6,
+      "elapsedMs": 0.71,
+      "memoryDeltaKb": 137.58,
+      "error": "bad XRef entry"
+    },
+    {
+      "library": "pdf-extraction@1.0.2",
+      "fileName": "experienced-resume.pdf",
+      "success": false,
+      "pages": 0,
+      "textLength": 0,
+      "matchedTokens": 0,
+      "expectedTokens": 6,
+      "elapsedMs": 0.42,
+      "memoryDeltaKb": 134.88,
+      "error": "bad XRef entry"
+    },
+    {
+      "library": "pdf-extraction@1.0.2",
+      "fileName": "multi-page-resume.pdf",
+      "success": true,
+      "pages": 2,
+      "textLength": 1061,
+      "matchedTokens": 6,
+      "expectedTokens": 6,
+      "elapsedMs": 15.28,
+      "memoryDeltaKb": 2426.33
+    },
+    {
+      "library": "pdf-extraction@1.0.2",
+      "fileName": "multi-column-resume.pdf",
+      "success": false,
+      "pages": 0,
+      "textLength": 0,
+      "matchedTokens": 0,
+      "expectedTokens": 6,
+      "elapsedMs": 1.08,
+      "memoryDeltaKb": 193.92,
+      "error": "bad XRef entry"
+    },
+    {
+      "library": "pdf-extraction@1.0.2",
+      "fileName": "erau-computing-resume.pdf",
+      "success": false,
+      "pages": 1,
+      "textLength": 2562,
+      "matchedTokens": 3,
+      "expectedTokens": 5,
+      "elapsedMs": 20.28,
+      "memoryDeltaKb": 5568.85
+    },
+    {
+      "library": "pdf-extraction@1.0.2",
+      "fileName": "fau-engineering-resume.pdf",
+      "success": true,
+      "pages": 1,
+      "textLength": 2018,
+      "matchedTokens": 5,
+      "expectedTokens": 5,
+      "elapsedMs": 21.21,
+      "memoryDeltaKb": -7342.81
+    },
+    {
+      "library": "pdf-extraction@1.0.2",
+      "fileName": "github-eric-thomas-resume.pdf",
+      "success": true,
+      "pages": 1,
+      "textLength": 4268,
+      "matchedTokens": 5,
+      "expectedTokens": 5,
+      "elapsedMs": 27.81,
+      "memoryDeltaKb": 8188.92
+    },
+    {
+      "library": "pdf-extraction@1.0.2",
+      "fileName": "github-matthew-roberts-resume.pdf",
+      "success": true,
+      "pages": 3,
+      "textLength": 4612,
+      "matchedTokens": 5,
+      "expectedTokens": 5,
+      "elapsedMs": 73.14,
+      "memoryDeltaKb": 7846.55
+    },
+    {
+      "library": "pdf-extraction@1.0.2",
+      "fileName": "github-mo-sorkhpar-resume.pdf",
+      "success": true,
+      "pages": 2,
+      "textLength": 9009,
+      "matchedTokens": 5,
+      "expectedTokens": 5,
+      "elapsedMs": 37,
+      "memoryDeltaKb": -5619.56
+    }
+  ],
+  "parserResults": [
+    {
+      "fileName": "fresher-resume.pdf",
+      "success": true,
+      "sourceType": "pdf",
+      "parseConfidence": 0.67,
+      "rawTextLength": 488,
+      "sections": 5,
+      "skills": 9,
+      "experience": 0,
+      "education": 1,
+      "warnings": [
+        "missing_experience"
+      ],
+      "elapsedMs": 9.85,
+      "memoryDeltaKb": 1415.24
+    },
+    {
+      "fileName": "experienced-resume.pdf",
+      "success": true,
+      "sourceType": "pdf",
+      "parseConfidence": 0.9,
+      "rawTextLength": 639,
+      "sections": 5,
+      "skills": 6,
+      "experience": 1,
+      "education": 1,
+      "warnings": [],
+      "elapsedMs": 3.97,
+      "memoryDeltaKb": 1235.28
+    },
+    {
+      "fileName": "multi-page-resume.pdf",
+      "success": true,
+      "sourceType": "pdf",
+      "parseConfidence": 0.9,
+      "rawTextLength": 1061,
+      "sections": 9,
+      "skills": 10,
+      "experience": 1,
+      "education": 1,
+      "warnings": [],
+      "elapsedMs": 5.03,
+      "memoryDeltaKb": 1974.52
+    },
+    {
+      "fileName": "multi-column-resume.pdf",
+      "success": true,
+      "sourceType": "pdf",
+      "parseConfidence": 0.9,
+      "rawTextLength": 438,
+      "sections": 5,
+      "skills": 8,
+      "experience": 1,
+      "education": 1,
+      "warnings": [],
+      "elapsedMs": 3.09,
+      "memoryDeltaKb": 1007.88
+    },
+    {
+      "fileName": "erau-computing-resume.pdf",
+      "success": true,
+      "sourceType": "pdf",
+      "parseConfidence": 0.9,
+      "rawTextLength": 2568,
+      "sections": 7,
+      "skills": 21,
+      "experience": 1,
+      "education": 1,
+      "warnings": [],
+      "elapsedMs": 15.4,
+      "memoryDeltaKb": -6651.09
+    },
+    {
+      "fileName": "fau-engineering-resume.pdf",
+      "success": true,
+      "sourceType": "pdf",
+      "parseConfidence": 0.77,
+      "rawTextLength": 2022,
+      "sections": 6,
+      "skills": 0,
+      "experience": 1,
+      "education": 1,
+      "warnings": [
+        "missing_skills"
+      ],
+      "elapsedMs": 15.05,
+      "memoryDeltaKb": 7119.64
+    },
+    {
+      "fileName": "github-eric-thomas-resume.pdf",
+      "success": true,
+      "sourceType": "pdf",
+      "parseConfidence": 1,
+      "rawTextLength": 4295,
+      "sections": 4,
+      "skills": 4,
+      "experience": 1,
+      "education": 1,
+      "warnings": [],
+      "elapsedMs": 21.42,
+      "memoryDeltaKb": -2283.56
+    },
+    {
+      "fileName": "github-matthew-roberts-resume.pdf",
+      "success": true,
+      "sourceType": "pdf",
+      "parseConfidence": 0.64,
+      "rawTextLength": 3829,
+      "sections": 3,
+      "skills": 0,
+      "experience": 1,
+      "education": 0,
+      "warnings": [
+        "missing_skills",
+        "missing_education"
+      ],
+      "elapsedMs": 101.04,
+      "memoryDeltaKb": 11812.95
+    },
+    {
+      "fileName": "github-mo-sorkhpar-resume.pdf",
+      "success": true,
+      "sourceType": "pdf",
+      "parseConfidence": 1,
+      "rawTextLength": 7420,
+      "sections": 5,
+      "skills": 70,
+      "experience": 1,
+      "education": 1,
+      "warnings": [],
+      "elapsedMs": 44.63,
+      "memoryDeltaKb": -14196.87
+    }
+  ],
+  "docxResults": [
+    {
+      "fileName": "technical-resume.docx",
+      "success": true,
+      "sourceType": "docx",
+      "parseConfidence": 0.9,
+      "rawTextLength": 439,
+      "sections": 4,
+      "skills": 11,
+      "experience": 1,
+      "education": 1,
+      "warnings": [],
+      "elapsedMs": 12.1,
+      "memoryDeltaKb": 1209.91
+    },
+    {
+      "fileName": "academic-resume.docx",
+      "success": true,
+      "sourceType": "docx",
+      "parseConfidence": 0.77,
+      "rawTextLength": 568,
+      "sections": 3,
+      "skills": 4,
+      "experience": 0,
+      "education": 1,
+      "warnings": [
+        "missing_experience"
+      ],
+      "elapsedMs": 3.23,
+      "memoryDeltaKb": 801.04
+    }
+  ]
+}
