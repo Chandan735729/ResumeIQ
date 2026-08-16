@@ -23,12 +23,18 @@ export const RegisterPage: React.FC = () => {
       toast.success('Registration successful! Please sign in.');
       navigate('/login');
     } catch (err: any) {
-      const msg = err.response?.data?.message || 'Failed to create account.';
-      toast.error(msg);
+      if (err.response?.data?.errors && Array.isArray(err.response.data.errors) && err.response.data.errors.length > 0) {
+        const errorMessages = err.response.data.errors.map((e: any) => e.message).join(' | ');
+        toast.error(errorMessages, { duration: 6000 });
+      } else {
+        const msg = err.response?.data?.message || 'Failed to create account.';
+        toast.error(msg);
+      }
     } finally {
       setIsLoading(false);
     }
   };
+
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -82,10 +88,14 @@ export const RegisterPage: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-sm outline-none transition-all"
-                placeholder="Minimum 8 characters with letters and numbers"
+                placeholder="e.g. Password123!"
               />
+              <p className="mt-1.5 text-xs text-slate-500">
+                Must be at least 8 characters with uppercase (A-Z), lowercase (a-z), number (0-9), and special symbol (!@#$%^&*).
+              </p>
             </div>
           </div>
+
 
           <button
             type="submit"
