@@ -29,14 +29,15 @@ export const DashboardPage: React.FC = () => {
         createdAt: r.createdAt || r.uploadedAt || new Date().toISOString(),
       }));
       setResumes(normalizedResumes);
-      setJobs(jobRes.data?.data || []);
-
+      const rawJobs = jobRes.data?.data?.jobDescriptions || (Array.isArray(jobRes.data?.data) ? jobRes.data.data : []);
+      setJobs(rawJobs);
     } catch {
       toast.error('Failed to load dashboard data.');
     } finally {
       setIsLoading(false);
     }
   };
+
 
 
   return (

@@ -23,7 +23,9 @@ export const JobDescriptionsPage: React.FC = () => {
         jobApi.listJobs().catch(() => ({ data: { data: [] } })),
         resumeApi.listResumes().catch(() => ({ data: { data: [] } })),
       ]);
-      setJobs(jobRes.data.data || []);
+      const rawJobs = jobRes.data?.data?.jobDescriptions || (Array.isArray(jobRes.data?.data) ? jobRes.data.data : []);
+      setJobs(rawJobs);
+
       const rawResumes = resumeRes.data?.data?.resumes || (Array.isArray(resumeRes.data?.data) ? resumeRes.data.data : []);
       const availableResumes = rawResumes.map((r: any) => ({
         id: r.id || r.resumeId,

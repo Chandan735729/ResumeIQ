@@ -29,12 +29,14 @@ export const ResumeDetailPage: React.FC = () => {
       ]);
       setResume(resRes.data.data);
       setVersions(verRes.data.data?.versions || []);
-      setJobs(jobRes.data.data || []);
-      if (jobRes.data.data?.length > 0) {
-        setSelectedJobId(jobRes.data.data[0].id);
+      const rawJobs = jobRes.data?.data?.jobDescriptions || (Array.isArray(jobRes.data?.data) ? jobRes.data.data : []);
+      setJobs(rawJobs);
+      if (rawJobs.length > 0) {
+        setSelectedJobId(rawJobs[0].id);
       }
     } catch {
       toast.error('Failed to load resume details.');
+
     } finally {
       setIsLoading(false);
     }
