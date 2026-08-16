@@ -4,7 +4,6 @@ import { jobApi, resumeApi } from '../services/api';
 import { SkillPill } from '../components/SkillPill';
 import toast from 'react-hot-toast';
 
-
 export const ATSAnalysisPage: React.FC = () => {
   const { jobId } = useParams<{ jobId: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -75,8 +74,14 @@ export const ATSAnalysisPage: React.FC = () => {
     return <div className="py-20 text-center text-slate-500">Calculating ATS match scores...</div>;
   }
 
-  const scoreResult = matchResult?.scoreResult;
-  const match = matchResult?.matchResult;
+  const overallScore = matchResult?.overallScore ?? matchResult?.scoreResult?.overallScore ?? null;
+  const interpretation = matchResult?.interpretation ?? matchResult?.scoreResult?.interpretation ?? '';
+  const scoreBreakdown = matchResult?.scoreBreakdown ?? matchResult?.scoreResult?.components ?? null;
+
+  const matchedItems = matchResult?.matched ?? matchResult?.matchResult?.skillMatch?.matched ?? [];
+  const partialItems = matchResult?.partial ?? [];
+  const missingItems = matchResult?.missing ?? matchResult?.matchResult?.skillMatch?.missing ?? [];
+  const recommendations = matchResult?.recommendations ?? matchResult?.scoreResult?.recommendations ?? [];
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -106,14 +111,14 @@ export const ATSAnalysisPage: React.FC = () => {
         </div>
 
         {/* Overall Score */}
-        {scoreResult && (
+        {overallScore !== null && (
           <div className="flex items-center space-x-6">
             <div className="text-right">
               <div className="text-xs text-slate-500 font-medium uppercase tracking-wider">Overall ATS Score</div>
               <div className="text-3xl font-extrabold text-slate-900 mt-0.5">
-                {scoreResult.overallScore}%
+                {overallScore}%
               </div>
-              <div className="text-xs text-slate-400">{scoreResult.interpretation}</div>
+              <div className="text-xs text-slate-400 capitalize">{interpretation}</div>
             </div>
 
             <button
@@ -135,77 +140,129 @@ export const ATSAnalysisPage: React.FC = () => {
           {/* Left 2 Cols: Component Breakdown & Skills */}
           <div className="lg:col-span-2 space-y-6">
             {/* 7 Components Breakdown */}
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-              <h2 className="text-base font-bold text-slate-900">7-Component ATS Score Breakdown</h2>
-              <div className="space-y-3">
-                {Object.entries(scoreResult.components).map(([key, comp]: [string, any]) => (
-                  <div key={key} className="space-y-1">
-                    <div className="flex justify-between text-xs font-semibold">
-                      <span className="capitalize text-slate-700">{key}</span>
-                      <span className="text-slate-900">
-                        {comp.earned} / {comp.maxPossible} pts ({comp.percentage}%)
-                      </span>
-                    </div>
-                    <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${
-                          comp.percentage >= 80
-                            ? 'bg-emerald-500'
-                            : comp.percentage >= 60
-                            ? 'bg-amber-500'
-                            : 'bg-rose-500'
-                        }`}
-                        style={{ width: `${Math.min(100, comp.percentage)}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
+            {scoreBreakdown && (
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                <h2 className="text-base font-bold text-slate-900">7-Component ATS Score Breakdown</h2>
+                <div className="space-y-3">
+                  {Object.entries(scoreBreakdown).map(([key, comp]: [string, any]) => {
+                    const earned = Number(comp.earned ?? 0);
+                    const max = Number(comp.max ?? comp.maxPossible ?? 0);
+                    const pct = max > 0 ? Math.round((earned / max) * 100) : (comp.percentage ?? 0);
+                    return (
+                      <div key={key} className="space-y-1">
+                        <div className="flex justify-between text-xs font-semibold">
+                          <span className="capitalize text-slate-700">{key}</span>
+                          <span className="text-slate-900">
+                            {earned} / {max} pts ({pct}%)
+                          </span>
+                        </div>
+                        <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${
+                              pct >= 80
+                                ? 'bg-emerald-500'
+                                : pct >= 60
+                                ? 'bg-amber-500'
+                                : 'bg-rose-500'
+                            }`}
+                            style={{ width: `${Math.min(100, pct)}%` }}
+                          />
+                        </div>
+                        {comp.explanation && (
+                          <p className="text-[11px] text-slate-400">{comp.explanation}</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Matched Skills */}
             <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-              <h2 className="text-base font-bold text-slate-900">Matched Skills & Technologies</h2>
-              {match?.skillMatch?.matched && match.skillMatch.matched.length > 0 ? (
+              <h2 className="text-base font-bold text-slate-900">Matched Requirements & Skills</h2>
+              {matchedItems.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
-                  {match.skillMatch.matched.map((item: any, i: number) => (
-                    <SkillPill key={i} skill={item.skill} status="matched" evidence={item.matchedSkill} />
-                  ))}
+                  {matchedItems.map((item: any, i: number) => {
+                    const skillName = typeof item === 'string' ? item : (item.label || item.requirement || item.name || item.skill);
+                    const evidence = typeof item === 'object' ? (item.evidence || item.matchedSkill) : undefined;
+                    return (
+                      <SkillPill key={i} skill={skillName} status="matched" evidence={evidence} />
+                    );
+                  })}
                 </div>
               ) : (
                 <p className="text-xs text-slate-500">No exact skill matches identified.</p>
               )}
             </div>
 
-            {/* Missing Skills */}
-            {match?.skillMatch?.missing && match.skillMatch.missing.length > 0 && (
+            {/* Partial Matches */}
+            {partialItems.length > 0 && (
               <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                <h2 className="text-base font-bold text-slate-900">Missing Job Requirements</h2>
+                <h2 className="text-base font-bold text-slate-900">Partial / Contextual Matches</h2>
                 <div className="flex flex-wrap gap-2">
-                  {match.skillMatch.missing.map((s: string, i: number) => (
-                    <SkillPill key={i} skill={s} status="missing" />
-                  ))}
+                  {partialItems.map((item: any, i: number) => {
+                    const skillName = typeof item === 'string' ? item : (item.label || item.requirement || item.name || item.skill);
+                    const evidence = typeof item === 'object' ? (item.evidence || item.matchedSkill) : undefined;
+                    return (
+                      <SkillPill key={i} skill={skillName} status="partial" evidence={evidence} />
+                    );
+                  })}
                 </div>
               </div>
             )}
+
+            {/* Missing Skills */}
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+              <h2 className="text-base font-bold text-slate-900">Missing Job Requirements</h2>
+              {missingItems.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {missingItems.map((item: any, i: number) => {
+                    const skillName = typeof item === 'string' ? item : (item.label || item.requirement || item.name || item.skill);
+                    return (
+                      <SkillPill key={i} skill={skillName} status="missing" />
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-500">All required skills and credentials matched!</p>
+              )}
+            </div>
           </div>
 
-          {/* Right Column: Explainable Recommendations */}
+          {/* Right Column: Explainable Recommendations & Match Info */}
           <div className="space-y-6">
             <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
               <h2 className="text-base font-bold text-slate-900">Actionable Recommendations</h2>
-              {matchResult.recommendations && matchResult.recommendations.length > 0 ? (
+              {recommendations.length > 0 ? (
                 <ul className="space-y-3 text-xs text-slate-600">
-                  {matchResult.recommendations.map((rec: string, i: number) => (
+                  {recommendations.map((rec: string, i: number) => (
                     <li key={i} className="p-3 bg-slate-50 rounded-lg border border-slate-200 leading-relaxed">
                       💡 {rec}
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-xs text-slate-500">No specific gaps detected.</p>
+                <p className="text-xs text-slate-500">No specific gap recommendations.</p>
               )}
             </div>
+
+            {/* Keyword Match Stats */}
+            {matchResult?.keywordMatch && (
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                <h3 className="text-sm font-bold text-slate-900">Keyword Alignment</h3>
+                <div className="text-xs text-slate-600 space-y-1.5">
+                  <div className="flex justify-between">
+                    <span>Matched Keywords:</span>
+                    <strong className="text-emerald-600">{matchResult.keywordMatch.matched?.length || 0}</strong>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Missing Keywords:</span>
+                    <strong className="text-rose-600">{matchResult.keywordMatch.missing?.length || 0}</strong>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       ) : null}
