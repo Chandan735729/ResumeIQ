@@ -37,12 +37,18 @@ export const UploadResumePage: React.FC = () => {
       toast.success('Resume uploaded and parsed successfully!');
       navigate(`/resumes/${resumeId}`);
     } catch (err: any) {
-      const msg = err.response?.data?.message || 'Failed to upload and parse resume.';
-      toast.error(msg);
+      if (err.response?.data?.errors && Array.isArray(err.response.data.errors) && err.response.data.errors.length > 0) {
+        const errorMessages = err.response.data.errors.map((e: any) => e.message).join(' | ');
+        toast.error(errorMessages, { duration: 6000 });
+      } else {
+        const msg = err.response?.data?.message || err.response?.data?.error || 'Failed to upload and parse resume.';
+        toast.error(msg);
+      }
     } finally {
       setIsUploading(false);
     }
   };
+
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
