@@ -19,14 +19,25 @@ export const DashboardPage: React.FC = () => {
         resumeApi.listResumes().catch(() => ({ data: { data: [] } })),
         jobApi.listJobs().catch(() => ({ data: { data: [] } })),
       ]);
-      setResumes(resumeRes.data.data || []);
-      setJobs(jobRes.data.data || []);
+      const rawResumes = resumeRes.data?.data?.resumes || (Array.isArray(resumeRes.data?.data) ? resumeRes.data.data : []);
+      const normalizedResumes = rawResumes.map((r: any) => ({
+        id: r.id || r.resumeId,
+        fileName: r.fileName,
+        fileSize: r.fileSize,
+        fileType: r.fileType,
+        parseStatus: r.parseStatus,
+        createdAt: r.createdAt || r.uploadedAt || new Date().toISOString(),
+      }));
+      setResumes(normalizedResumes);
+      setJobs(jobRes.data?.data || []);
+
     } catch {
       toast.error('Failed to load dashboard data.');
     } finally {
       setIsLoading(false);
     }
   };
+
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

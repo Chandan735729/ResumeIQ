@@ -31,10 +31,15 @@ export const ATSAnalysisPage: React.FC = () => {
       ]);
 
       setJob(jobRes.data.data);
-      const availableResumes = resumeRes.data.data || [];
+      const rawResumes = resumeRes.data?.data?.resumes || (Array.isArray(resumeRes.data?.data) ? resumeRes.data.data : []);
+      const availableResumes = rawResumes.map((r: any) => ({
+        id: r.id || r.resumeId,
+        fileName: r.fileName,
+      }));
       setResumes(availableResumes);
 
       const targetResumeId = selectedResumeId || (availableResumes.length > 0 ? availableResumes[0].id : '');
+
       if (targetResumeId) {
         setSelectedResumeId(targetResumeId);
         runMatch(jobId!, targetResumeId);

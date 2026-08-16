@@ -24,7 +24,13 @@ export const JobDescriptionsPage: React.FC = () => {
         resumeApi.listResumes().catch(() => ({ data: { data: [] } })),
       ]);
       setJobs(jobRes.data.data || []);
-      setResumes(resumeRes.data.data || []);
+      const rawResumes = resumeRes.data?.data?.resumes || (Array.isArray(resumeRes.data?.data) ? resumeRes.data.data : []);
+      const availableResumes = rawResumes.map((r: any) => ({
+        id: r.id || r.resumeId,
+        fileName: r.fileName,
+      }));
+      setResumes(availableResumes);
+
     } catch {
       toast.error('Failed to load job descriptions.');
     } finally {
