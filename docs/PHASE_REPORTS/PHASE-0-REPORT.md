@@ -15,7 +15,7 @@ The repository verifies as a backend prototype, not a production-grade or end-to
 
 ## 3. Repository Architecture
 
-See [ARCHITECTURE_AUDIT.md](../ARCHITECTURE_AUDIT.md). Implemented traffic is Express → Prisma/PostgreSQL and local `/app/storage`; Winston emits console and local log files. Redis, Gemini, AWS S3, and frontend packages are configuration/dependency intentions, not integrated services.
+See [ARCHITECTURE_AUDIT.md](../audits/ARCHITECTURE_AUDIT.md). Implemented traffic is Express → Prisma/PostgreSQL and local `/app/storage`; Winston emits console and local log files. Redis, Gemini, AWS S3, and frontend packages are configuration/dependency intentions, not integrated services.
 
 ## 4. Actual Technology Stack
 
