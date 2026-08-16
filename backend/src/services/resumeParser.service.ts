@@ -65,14 +65,15 @@ export async function parseResume(buffer: Buffer, fileName: string): Promise<IPa
 
   const contact = extractContact(lines);
   const sections = detectSections(lines);
-  const skills = extractSkills(sections);
+  const skills = extractSkills(sections, normalizedText);
   const experience = extractExperience(sections);
   const education = extractEducation(sections);
   const projects = extractProjectItems(sections);
   const certifications = extractCertificationItems(sections);
-  const languages = extractLanguageItems(sections);
+  const languages = extractLanguageItems(sections, normalizedText);
   const summary = extractSummary(sections);
   const resumeType = determineResumeType({ experience, education, skills, sections });
+
 
   const metadata: IParsedResumeMetadata = {
     pageCount: parseResult.pageCount,
@@ -298,8 +299,10 @@ function safeDecodePdfText(value: string): string {
 async function extractPdfTextWithPdfJsChildProcess(buffer: Buffer): Promise<{ rawText: string; pageCount: number; layoutNotes: string[] }> {
   const backendRoot = path.resolve(__dirname, '../../');
   // Worker script lives in the same directory as this service file so that
-  // Node.js ESM resolves pdfjs-dist from the project node_modules.
-  const workerScript = path.join(__dirname, 'pdfjs-extract-worker.mjs');
+  const workerScript = fs.existsSync(path.join(__dirname, 'pdfjs-extract-worker.mjs'))
+    ? path.join(__dirname, 'pdfjs-extract-worker.mjs')
+    : path.join(backendRoot, 'src/services/pdfjs-extract-worker.mjs');
+
 
   // Write only the PDF buffer to a temp file; the script itself is the static worker.
   const tmpDir = os.tmpdir();
@@ -580,47 +583,82 @@ function isContactLine(line: string): boolean {
 }
 
 function classifySectionHeading(line: string): ParsedSectionType | null {
-  const normalized = line.toLowerCase().replace(/[:-]+$/, '').trim();
-  const compact = normalized.replace(/\s+/g, '');
-
-  if (line.includes('|') && line.length > 30) {
+  if (!line || line.length > 80) {
     return null;
   }
 
-  const compactHeadingMap: [string[], ParsedSectionType][] = [
-    [['summary', 'professionalsummary', 'profile', 'aboutme', 'careersummary', 'objective', 'professionalprofile'], 'summary'],
-    [['experience', 'workexperience', 'professionalexperience', 'employmenthistory', 'careerhistory'], 'experience'],
-    [['education', 'academicbackground', 'academiccredentials', 'education&training'], 'education'],
-    [['skills', 'technicalskills', 'corecompetencies', 'skillset', 'areasofexpertise'], 'skills'],
-    [['projects', 'academicprojects', 'selectedprojects', 'projectexperience'], 'projects'],
-    [['certifications', 'certificates', 'licenses', 'credentials'], 'certifications'],
-    [['languages', 'languageproficiency', 'languageskills'], 'languages'],
-  ];
+  // Clean bullet characters, leading numbers, symbols, colons, horizontal rules
+  const cleaned = line
+    .replace(/^[•\-\*#>\d\.\)\(\]~]+\s*/, '')
+    .replace(/[:\-_~=|]+$/, '')
+    .trim();
 
-  for (const [headings, type] of compactHeadingMap) {
-    if (headings.includes(compact)) {
-      return type;
-    }
-  }
-
-  const headingMap: [RegExp, ParsedSectionType][] = [
-    [/^(summary|professional summary|profile|about me|career summary|objective|professional profile)/i, 'summary'],
-    [/^(experience|work experience|professional experience|employment history|career history)/i, 'experience'],
-    [/^(education|academic background|academic credentials|education & training)/i, 'education'],
-    [/^(skills|technical skills|core competencies|skillset|areas of expertise)/i, 'skills'],
-    [/^(projects|academic projects|selected projects|project experience)/i, 'projects'],
-    [/^(certifications|certificates|licenses|credentials)/i, 'certifications'],
-    [/^(languages|language proficiency|language skills)/i, 'languages'],
-  ];
-
-  for (const [pattern, type] of headingMap) {
-    if (pattern.test(normalized) || pattern.test(compact)) {
-      return type;
-    }
-  }
-
-  if (/^[A-Z\s]{2,50}$/.test(line) && line.length < 40 && !line.includes(' ')) {
+  if (!cleaned || cleaned.length > 60) {
     return null;
+  }
+
+  // Don't treat a long delimited line as a heading
+  if (line.includes('|') && line.length > 35) {
+    return null;
+  }
+
+  const lower = cleaned.toLowerCase();
+  const compact = lower.replace(/[\s&/_.,\-–—|:]+/g, '');
+
+  // Skills
+  if (
+    /^(technical\s*skills?|core\s*competenc|skills?|technolog|tools?\s*(&|and)\s*tech|programming\s*lang|software\s*skills?|it\s*skills?|tech\s*stack|developer\s*skills?|areas?\s*of\s*expertise|specialized\s*skills?|proficienc|skillset|key\s*skills?|computer\s*skills?|relevant\s*skills?|domain\s*skills?)/i.test(lower) ||
+    /^(technicalskills|skills|technologies|toolsandtechnologies|programminglanguages|techstack|corecompetencies|areasofexpertise|skillset|keyskills|technicalproficiencies|technicalcompetencies|softwarequalifications|programmingtools|programmingskills|coretechnicalskills|skillsandtools|skillsandtechnologies)/i.test(compact)
+  ) {
+    return 'skills';
+  }
+
+  // Summary
+  if (
+    /^(professional\s*summary|summary|profile|about\s*me|career\s*summary|objective|professional\s*profile|executive\s*summary|career\s*objective|personal\s*statement|biography)/i.test(lower) ||
+    /^(professionalsummary|summary|profile|aboutme|careersummary|objective|professionalprofile|executivesummary|careerobjective|personalstatement)/i.test(compact)
+  ) {
+    return 'summary';
+  }
+
+  // Experience
+  if (
+    /^(work\s*experience|professional\s*experience|experience|employment\s*history|career\s*history|work\s*history|relevant\s*experience|internships?|practical\s*experience)/i.test(lower) ||
+    /^(workexperience|professionalexperience|experience|employmenthistory|careerhistory|workhistory|relevantexperience|internships)/i.test(compact)
+  ) {
+    return 'experience';
+  }
+
+  // Education
+  if (
+    /^(education|academic\s*background|academic\s*credentials?|academic\s*qualifications?|education\s*(&|and)\s*training|degrees?|qualifications?|educational\s*qualifications?)/i.test(lower) ||
+    /^(education|academicbackground|academiccredentials|academicqualifications|educationandtraining|degrees|qualifications|educationalqualifications)/i.test(compact)
+  ) {
+    return 'education';
+  }
+
+  // Projects
+  if (
+    /^(projects?|academic\s*projects?|selected\s*projects?|project\s*experience|personal\s*projects?|side\s*projects?|key\s*projects?|technical\s*projects?|software\s*projects?)/i.test(lower) ||
+    /^(projects|academicprojects|selectedprojects|projectexperience|personalprojects|sideprojects|keyprojects|technicalprojects|softwareprojects)/i.test(compact)
+  ) {
+    return 'projects';
+  }
+
+  // Certifications
+  if (
+    /^(certifications?|certificates?|licenses?|credentials?|certifications?\s*(&|and)\s*licenses?|professional\s*certifications?|accreditations?)/i.test(lower) ||
+    /^(certifications|certificates|licenses|credentials|certificationsandlicenses|professionalcertifications|accreditations)/i.test(compact)
+  ) {
+    return 'certifications';
+  }
+
+  // Languages
+  if (
+    /^(languages?|language\s*proficiency|language\s*skills?|languages?\s*known|spoken\s*languages?|foreign\s*languages?|linguistic\s*skills?)/i.test(lower) ||
+    /^(languages|languageproficiency|languageskills|languagesknown|spokenlanguages|foreignlanguages|linguisticskills)/i.test(compact)
+  ) {
+    return 'languages';
   }
 
   return null;
@@ -634,20 +672,105 @@ function finalizeSection(section: IParsedSection): IParsedSection {
   };
 }
 
-export function extractSkills(sections: IParsedSection[]): string[] {
+const CATEGORY_PREFIX_REGEX = /^(languages?|programming\s*languages?|web\s*technologies?|frameworks?|libraries|lib|databases?|db|developer\s*tools?|tools?|devops|cloud|platforms?|technologies|backend|frontend|fullstack|operating\s*systems?|os|concepts|others?|skills?|core\s*competencies?|proficiencies?|software|methodologies)\s*[:–—\-]\s*/i;
+
+export function extractSkills(sections: IParsedSection[], fullRawText?: string): string[] {
+  const extractedSkills = new Set<string>();
+
   const skillsSection = sections.find((section) => section.type === 'skills');
-  if (!skillsSection) {
-    return [];
+  if (skillsSection) {
+    const lines = skillsSection.normalizedText.split('\n');
+    for (const rawLine of lines) {
+      let line = rawLine.trim();
+      if (!line) continue;
+
+      // Remove leading bullet characters
+      line = line.replace(/^[•\-\*#>\d\.\)\(\]~]+\s*/, '').trim();
+
+      // Remove category prefix (e.g. "Languages: " or "Frameworks: ")
+      line = line.replace(CATEGORY_PREFIX_REGEX, '').trim();
+
+      // Split on delimiters: commas, semicolons, pipes, bullets, middle dots, slashes with spaces, tabs
+      const rawTokens = line.split(/[,;|\t•·\n]|\s+\/\s+|\s+–\s+|\s+—\s+/);
+      for (let token of rawTokens) {
+        token = token.trim();
+        token = token.replace(/^[•\-\*~:\s]+|[•\-\*~:\s]+$/g, '').trim();
+        token = token.replace(CATEGORY_PREFIX_REGEX, '').trim();
+
+        // Handle parentheses: e.g. "Python (Django, FastAPI)"
+        if (token.includes('(') && token.includes(')')) {
+          const mainPart = token.replace(/\(.*\)/, '').trim();
+          if (mainPart && mainPart.length >= 2 && mainPart.length <= 40 && !isGenericNonSkill(mainPart)) {
+            extractedSkills.add(mainPart);
+          }
+          const innerMatch = token.match(/\((.*?)\)/);
+          if (innerMatch && innerMatch[1]) {
+            const innerTokens = innerMatch[1].split(/[,;/|•]/);
+            for (const it of innerTokens) {
+              const cleanedIt = it.trim();
+              if (cleanedIt && cleanedIt.length >= 2 && cleanedIt.length <= 40 && !isGenericNonSkill(cleanedIt)) {
+                extractedSkills.add(cleanedIt);
+              }
+            }
+          }
+          continue;
+        }
+
+        if (token && token.length >= 2 && token.length <= 40 && !isGenericNonSkill(token)) {
+          extractedSkills.add(token);
+        }
+      }
+    }
   }
 
-  const rawItems = skillsSection.normalizedText.split(/[,;\n]/).map((piece) => piece.trim());
-  const skills = rawItems
-    .map((item) => item.replace(/^•\s*/u, '').trim())
-    .filter(Boolean)
-    .map((item) => item.replace(/\s{2,}/g, ' '));
+  // Fallback: If 0 or very few skills extracted, scan full text for standard technical skills
+  if (extractedSkills.size < 3 && fullRawText) {
+    const fallbackSkills = scanCommonTechnicalSkills(fullRawText);
+    for (const s of fallbackSkills) {
+      extractedSkills.add(s);
+    }
+  }
 
-  return Array.from(new Set(skills));
+  return Array.from(extractedSkills);
 }
+
+function isGenericNonSkill(word: string): boolean {
+  const lower = word.toLowerCase().trim();
+  const nonSkills = new Set([
+    'etc', 'and', 'or', 'various', 'including', 'skills', 'technical skills',
+    'tools', 'technologies', 'proficient in', 'experience with', 'knowledge of',
+    'strong understanding of', 'familiar with', 'expert in', 'proficiencies',
+    'frameworks', 'libraries', 'databases', 'languages', 'programming languages',
+    'web technologies', 'developer tools', 'core competencies'
+  ]);
+  return nonSkills.has(lower) || lower.length < 2 || /^\d+$/.test(lower);
+}
+
+const COMMON_TECH_SKILLS = [
+  'JavaScript', 'TypeScript', 'Python', 'Java', 'C++', 'C#', 'Golang', 'Rust', 'Ruby',
+  'PHP', 'Swift', 'Kotlin', 'Scala', 'Dart', 'SQL', 'HTML', 'CSS', 'HTML5', 'CSS3',
+  'React', 'React Native', 'Next.js', 'Vue', 'Vue.js', 'Angular', 'Svelte', 'Redux',
+  'Node.js', 'Express', 'Express.js', 'Nest.js', 'Django', 'FastAPI', 'Flask',
+  'Spring Boot', 'ASP.NET', 'PostgreSQL', 'MySQL', 'MongoDB', 'Redis', 'SQLite',
+  'Oracle', 'Cassandra', 'Elasticsearch', 'DynamoDB', 'GraphQL', 'REST APIs',
+  'Docker', 'Kubernetes', 'AWS', 'GCP', 'Azure', 'Terraform', 'Jenkins', 'CI/CD',
+  'Git', 'GitHub', 'GitLab', 'Linux', 'Tailwind CSS', 'Bootstrap', 'Webpack',
+  'Vite', 'Kafka', 'RabbitMQ', 'PyTorch', 'TensorFlow', 'Pandas', 'NumPy',
+  'Scikit-learn', 'Postman', 'Jira', 'Agile', 'Scrum'
+];
+
+function scanCommonTechnicalSkills(text: string): string[] {
+  const found: string[] = [];
+  for (const skill of COMMON_TECH_SKILLS) {
+    const escaped = skill.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(^|[^a-zA-Z0-9_#+])${escaped}([^a-zA-Z0-9_#+]|$)`, 'i');
+    if (regex.test(text)) {
+      found.push(skill);
+    }
+  }
+  return found;
+}
+
 
 export function extractExperience(sections: IParsedSection[]): IExperienceItem[] {
   const experienceSection = sections.find((section) => section.type === 'experience');
@@ -798,21 +921,83 @@ export function extractCertificationItems(sections: IParsedSection[]): ICertific
   return lines.map((line) => ({ name: line, authority: '', date: '' }));
 }
 
-export function extractLanguageItems(sections: IParsedSection[]): ILanguageItem[] {
+const COMMON_LANGUAGES = [
+  'English', 'Spanish', 'French', 'German', 'Mandarin', 'Chinese', 'Hindi', 'Arabic',
+  'Russian', 'Portuguese', 'Japanese', 'Italian', 'Korean', 'Dutch', 'Turkish',
+  'Polish', 'Swedish', 'Vietnamese', 'Bengali', 'Tamil', 'Telugu', 'Marathi',
+  'Urdu', 'Gujarati', 'Kannada', 'Malayalam', 'Punjabi'
+];
+
+export function extractLanguageItems(sections: IParsedSection[], fullRawText?: string): ILanguageItem[] {
+  const languagesList: ILanguageItem[] = [];
+  const seen = new Set<string>();
+
   const section = sections.find((item) => item.type === 'languages');
-  if (!section) {
-    return [];
+  if (section) {
+    const lines = section.normalizedText.split('\n');
+    for (let rawLine of lines) {
+      let line = rawLine.trim();
+      if (!line) continue;
+      line = line.replace(/^[•\-\*#>\d\.\)\(\]~]+\s*/, '').trim();
+      line = line.replace(/^(languages?|languages?\s*known|spoken\s*languages?|foreign\s*languages?)\s*[:–—\-]\s*/i, '').trim();
+
+      const tokens = line.split(/[,;|\t•·\n]|\s+–\s+|\s+—\s+/);
+      for (const token of tokens) {
+        let t = token.trim();
+        if (!t) continue;
+
+        let name = t;
+        let proficiency: string | undefined = undefined;
+
+        if (t.includes('(') && t.includes(')')) {
+          const parts = t.split(/\(|\)/).map((p) => p.trim()).filter(Boolean);
+          name = parts[0];
+          proficiency = parts[1];
+        } else if (t.includes(':')) {
+          const parts = t.split(':').map((p) => p.trim()).filter(Boolean);
+          name = parts[0];
+          proficiency = parts[1];
+        } else if (t.includes(' - ')) {
+          const parts = t.split(' - ').map((p) => p.trim()).filter(Boolean);
+          name = parts[0];
+          proficiency = parts[1];
+        }
+
+        name = name.replace(/^[•\-\*~:\s]+|[•\-\*~:\s]+$/g, '').trim();
+        if (name && name.length >= 2 && name.length <= 30 && !seen.has(name.toLowerCase())) {
+          seen.add(name.toLowerCase());
+          languagesList.push({
+            name,
+            proficiency: proficiency || undefined,
+          });
+        }
+      }
+    }
   }
 
-  const tokens = section.normalizedText.split(/[,\n]/).map((line) => line.replace(/^•\s*/u, '').trim()).filter(Boolean);
-  return tokens.map((token) => {
-    const parts = token.split(/\(|\)/).map((item) => item.trim()).filter(Boolean);
-    return {
-      name: parts[0],
-      proficiency: parts[1],
-    };
-  });
+  // Fallback: If 0 languages found, check if full text declares languages
+  if (languagesList.length === 0 && fullRawText) {
+    const contextRegex = /(?:languages?|spoken|fluent in|proficient in|native|mother tongue|bilingual)[\s\S]{1,120}/i;
+    const contextMatch = fullRawText.match(contextRegex);
+    if (contextMatch) {
+      const matchText = contextMatch[0];
+      for (const lang of COMMON_LANGUAGES) {
+        const regex = new RegExp(`\\b${lang}\\b(?:\\s*[-:–—(]\\s*([A-Za-z ]+)\\)?)?`, 'i');
+        const langMatch = matchText.match(regex);
+        if (langMatch && !seen.has(lang.toLowerCase())) {
+          seen.add(lang.toLowerCase());
+          languagesList.push({
+            name: lang,
+            proficiency: langMatch[1]?.trim() || undefined,
+          });
+        }
+      }
+    }
+  }
+
+  return languagesList;
 }
+
 
 export function determineResumeType(params: {
   experience: IExperienceItem[];
