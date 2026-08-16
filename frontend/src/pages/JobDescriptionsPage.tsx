@@ -34,13 +34,18 @@ export const JobDescriptionsPage: React.FC = () => {
 
   const handleCreateJob = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!jobTitle || !rawText) {
-      toast.error('Job title and description text are required.');
+    if (!jobTitle.trim()) {
+      toast.error('Job title is required.');
+      return;
+    }
+
+    if (!rawText.trim() || rawText.trim().length < 50) {
+      toast.error(`Job description must be at least 50 characters to extract requirements (currently ${rawText.trim().length} characters).`);
       return;
     }
 
     try {
-      await jobApi.createJob({ jobTitle, companyName, rawText });
+      await jobApi.createJob({ jobTitle: jobTitle.trim(), companyName: companyName.trim() || undefined, rawText: rawText.trim() });
       toast.success('Job description analyzed and saved!');
       setJobTitle('');
       setCompanyName('');
@@ -48,9 +53,25 @@ export const JobDescriptionsPage: React.FC = () => {
       setIsCreating(false);
       loadData();
     } catch (err: any) {
-      const msg = err.response?.data?.message || 'Failed to save job description.';
-      toast.error(msg);
+      if (err.response?.data?.errors && Array.isArray(err.response.data.errors) && err.response.data.errors.length > 0) {
+        const errorMessages = err.response.data.errors.map((e: any) => e.message).join(' | ');
+        toast.error(errorMessages, { duration: 6000 });
+      } else {
+        const msg = err.response?.data?.message || err.response?.data?.error || 'Failed to save job description.';
+        toast.error(msg);
+      }
     }
+  };
+
+  const handleInsertSampleJob = () => {
+    setJobTitle('Senior Full-Stack Engineer');
+    setCompanyName('Tech Innovators Inc.');
+    setRawText(`We are looking for a Senior Full-Stack Engineer with 5+ years of experience in TypeScript, React, Node.js, and PostgreSQL. 
+Requirements:
+- Strong proficiency in modern React, TailwindCSS, and RESTful APIs.
+- Experience with backend microservices, Express, Docker, and AWS / GCP.
+- Bachelor's degree in Computer Science or equivalent practical experience.
+- Passion for clean code, automated testing, and CI/CD pipelines.`);
   };
 
   return (
@@ -74,7 +95,16 @@ export const JobDescriptionsPage: React.FC = () => {
       {/* Creation Modal / Inline Form */}
       {isCreating && (
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-          <h2 className="text-lg font-bold text-slate-900">Analyze New Job Description</h2>
+          <div className="flex justify-between items-center">
+            <h2 className="text-lg font-bold text-slate-900">Analyze New Job Description</h2>
+            <button
+              type="button"
+              onClick={handleInsertSampleJob}
+              className="text-xs text-sky-600 hover:text-sky-700 font-semibold bg-sky-50 px-3 py-1.5 rounded-lg border border-sky-200 transition-colors"
+            >
+              📋 Load Sample Posting
+            </button>
+          </div>
           <form onSubmit={handleCreateJob} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -106,17 +136,27 @@ export const JobDescriptionsPage: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
-                Paste Job Description Text *
-              </label>
+              <div className="flex justify-between items-center mb-1">
+                <label className="block text-xs font-semibold text-slate-700 uppercase">
+                  Paste Job Description Text *
+                </label>
+                <span className={`text-xs ${rawText.trim().length >= 50 ? 'text-emerald-600 font-semibold' : 'text-slate-400'}`}>
+                  {rawText.trim().length} / 50 min chars
+                </span>
+              </div>
               <textarea
                 rows={6}
                 required
                 value={rawText}
                 onChange={(e) => setRawText(e.target.value)}
-                placeholder="Paste the full job posting requirements here..."
+                placeholder="Paste the full job posting requirements here (minimum 50 characters)..."
                 className="w-full px-3.5 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-sky-500 font-mono text-xs"
               />
+              {rawText.trim().length > 0 && rawText.trim().length < 50 && (
+                <p className="text-xs text-rose-500 mt-1">
+                  Please provide at least 50 characters so the NLP engine can identify skills and requirements.
+                </p>
+              )}
             </div>
 
             <div className="flex justify-end space-x-3">
@@ -129,9 +169,9 @@ export const JobDescriptionsPage: React.FC = () => {
               </button>
               <button
                 type="submit"
-                className="px-6 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-sm font-semibold shadow-sm"
+                className="px-5 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-sm font-semibold shadow-sm transition-colors"
               >
-                Ingest & Extract Requirements
+                Save & Extract Requirements
               </button>
             </div>
           </form>
@@ -139,6 +179,7 @@ export const JobDescriptionsPage: React.FC = () => {
       )}
 
       {/* Jobs List */}
+
       {isLoading ? (
         <div className="py-20 text-center text-slate-500">Loading target job listings...</div>
       ) : jobs.length === 0 ? (

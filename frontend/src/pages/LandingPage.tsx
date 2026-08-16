@@ -1,7 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useAuthStore } from '../services/authStore';
 
 export const LandingPage: React.FC = () => {
+  const { isAuthenticated, user } = useAuthStore();
+
   return (
     <div className="bg-gradient-to-b from-slate-50 to-white min-h-[calc(100vh-4rem)]">
       {/* Hero */}
@@ -19,20 +22,40 @@ export const LandingPage: React.FC = () => {
         </p>
 
         <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4">
-          <Link
-            to="/register"
-            className="px-8 py-3.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold shadow-md hover:shadow-lg transition-all text-base"
-          >
-            Start Free Optimization
-          </Link>
-          <Link
-            to="/login"
-            className="px-8 py-3.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 font-semibold border border-slate-300 shadow-sm transition-all text-base"
-          >
-            Sign In to Account
-          </Link>
+          {isAuthenticated ? (
+            <>
+              <Link
+                to="/dashboard"
+                className="px-8 py-3.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold shadow-md hover:shadow-lg transition-all text-base"
+              >
+                Go to Dashboard ({user?.name || user?.email || 'Workspace'}) →
+              </Link>
+              <Link
+                to="/upload"
+                className="px-8 py-3.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 font-semibold border border-slate-300 shadow-sm transition-all text-base"
+              >
+                + Upload Resume
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link
+                to="/register"
+                className="px-8 py-3.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold shadow-md hover:shadow-lg transition-all text-base"
+              >
+                Start Free Optimization
+              </Link>
+              <Link
+                to="/login"
+                className="px-8 py-3.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 font-semibold border border-slate-300 shadow-sm transition-all text-base"
+              >
+                Sign In to Account
+              </Link>
+            </>
+          )}
         </div>
       </div>
+
 
       {/* Feature Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 border-t border-slate-200">
