@@ -32,18 +32,32 @@ export class ErrorBoundary extends Component<Props, State> {
               !
             </div>
             <h2 className="text-xl font-bold text-slate-900 mb-2">Something went wrong</h2>
-            <p className="text-sm text-slate-600 mb-6">
+            <p className="text-sm text-slate-600 mb-2">
               An unexpected error occurred in the application interface.
             </p>
-            <button
-              onClick={() => window.location.reload()}
-              className="bg-sky-600 hover:bg-sky-700 text-white font-medium px-4 py-2 rounded-lg text-sm transition-colors"
-            >
-              Reload Page
-            </button>
+            {this.state.error && (
+              <p className="text-xs text-rose-600 bg-rose-50 p-2.5 rounded-lg border border-rose-200 mb-6 font-mono break-all text-left">
+                {this.state.error.message}
+              </p>
+            )}
+            <div className="flex justify-center space-x-3">
+              <button
+                onClick={() => window.location.reload()}
+                className="bg-sky-600 hover:bg-sky-700 text-white font-medium px-4 py-2 rounded-lg text-sm transition-colors"
+              >
+                Reload Page
+              </button>
+              <a
+                href="/"
+                className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-4 py-2 rounded-lg text-sm transition-colors"
+              >
+                Go to Dashboard
+              </a>
+            </div>
           </div>
         </div>
       );
+
     }
 
     return this.props.children;

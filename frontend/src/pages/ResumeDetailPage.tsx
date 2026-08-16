@@ -70,7 +70,12 @@ export const ResumeDetailPage: React.FC = () => {
     return <div className="py-20 text-center text-slate-500">Resume not found.</div>;
   }
 
-  const layout = resume.extractedLayout ? JSON.parse(resume.extractedLayout) : null;
+  const layout = resume.extractedLayout
+    ? typeof resume.extractedLayout === 'string'
+      ? (() => { try { return JSON.parse(resume.extractedLayout); } catch { return null; } })()
+      : resume.extractedLayout
+    : null;
+
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">

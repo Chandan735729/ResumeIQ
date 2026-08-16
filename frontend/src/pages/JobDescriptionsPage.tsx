@@ -154,8 +154,13 @@ export const JobDescriptionsPage: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {jobs.map((job) => {
-            const structure = job.extractedStructure ? JSON.parse(job.extractedStructure) : null;
+            const structure = job.extractedStructure
+              ? typeof job.extractedStructure === 'string'
+                ? (() => { try { return JSON.parse(job.extractedStructure); } catch { return null; } })()
+                : job.extractedStructure
+              : null;
             return (
+
               <div
                 key={job.id}
                 className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3 flex flex-col justify-between"
