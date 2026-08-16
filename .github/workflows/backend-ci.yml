@@ -1,0 +1,94 @@
+name: CI / Production Verification
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  backend-ci:
+    name: Backend Test & Build (PostgreSQL)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: resumeiq_user
+          POSTGRES_PASSWORD: resumeiq_pass
+          POSTGRES_DB: resumeiq
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      NODE_ENV: test
+      PORT: 3000
+      DATABASE_URL: postgresql://resumeiq_user:resumeiq_pass@localhost:5432/resumeiq
+      JWT_SECRET: ci-test-secret-value-that-is-long-enough-1234567890
+      STORAGE_PROVIDER: local
+      STORAGE_BASE_DIR: ./storage_ci
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install Backend Dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client & Run Migrations
+        run: |
+          npx prisma generate
+          npx prisma migrate deploy
+
+      - name: TypeScript Type-Check
+        run: npm run type-check
+
+      - name: ESLint Code Quality
+        run: npm run lint
+
+      - name: Run Full Test Suite (Unit & DB-Backed Integration)
+        run: npm test -- --runInBand
+
+      - name: Build Production Bundle
+        run: npm run build
+
+      - name: Security & Secret Scan
+        shell: pwsh
+        run: ../scripts/secret-scan.ps1
+
+  frontend-ci:
+    name: Frontend Test & Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package.json
+
+      - name: Install Frontend Dependencies
+        run: npm install
+
+      - name: TypeScript Type-Check
+        run: npm run type-check
+
+      - name: Build Production Bundle
+        run: npm run build
