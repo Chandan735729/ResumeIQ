@@ -25,8 +25,10 @@ router.get('/', listJobDescriptionsHandler);                           // GET   
 router.get('/:jobId', getJobDescriptionHandler);                       // GET    /api/jobs/:jobId
 router.delete('/:jobId', deleteJobDescriptionHandler);                 // DELETE /api/jobs/:jobId
 
-// Analysis
+// Analysis / Match
 router.post('/:jobId/analyze', analyzeJobDescriptionHandler);          // POST   /api/jobs/:jobId/analyze
+router.post('/:jobId/match', analyzeJobDescriptionHandler);            // POST   /api/jobs/:jobId/match (alias)
 router.get('/:jobId/results/:resumeId', getMatchResultHandler);        // GET    /api/jobs/:jobId/results/:resumeId
+
 
 export { router as jobDescriptionRoutes };
