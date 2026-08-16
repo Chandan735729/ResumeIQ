@@ -146,13 +146,20 @@ export const OptimizationPage: React.FC = () => {
                 Download DOCX
               </button>
               <Link
+                to={`/resumes/${resumeId}/versions/${result.versionId}/compare`}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-semibold shadow-sm"
+              >
+                Compare Versions
+              </Link>
+              <Link
                 to={`/resumes/${resumeId}`}
                 className="px-4 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-medium"
               >
-                Done
+                View Resume
               </Link>
             </div>
           </div>
+
 
           {/* Fact Guardrail Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
