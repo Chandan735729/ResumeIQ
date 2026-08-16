@@ -24,25 +24,28 @@ export async function checkUserAIQuota(userId: string): Promise<QuotaCheckResult
   });
 
   if (!subscription) {
-    // Default free tier: 5 optimizations/month
+    // Default free tier
     return {
       isAllowed: true,
       usedQuota: 0,
-      monthlyQuota: 5,
-      remainingQuota: 5,
+      monthlyQuota: 100,
+      remainingQuota: 100,
     };
   }
 
-  const remaining = Math.max(0, subscription.monthlyQuota - subscription.usedQuota);
-  const isAllowed = subscription.usedQuota < subscription.monthlyQuota;
+  const isDev = process.env.NODE_ENV !== 'production';
+  const effectiveQuota = isDev ? Math.max(subscription.monthlyQuota, 100) : subscription.monthlyQuota;
+  const remaining = Math.max(0, effectiveQuota - subscription.usedQuota);
+  const isAllowed = isDev || subscription.usedQuota < effectiveQuota;
 
   return {
     isAllowed,
     usedQuota: subscription.usedQuota,
-    monthlyQuota: subscription.monthlyQuota,
+    monthlyQuota: effectiveQuota,
     remainingQuota: remaining,
     reason: isAllowed ? undefined : 'Monthly AI optimization quota exceeded. Please upgrade your subscription.',
   };
+
 }
 
 export async function incrementUserAIUsage(
