@@ -82,11 +82,15 @@ test-results/
 # Uploaded User Documents & Ephemeral Storage
 storage/
 **/storage/
-uploads/
-**/uploads/
+/uploads/
+backend/storage/
+backend/uploads/
+!backend/src/modules/uploads/
+!backend/src/modules/uploads/**
 user-data/
 test_reconciliation_storage/
 storage_ci/
+
 
 # Python & Virtual Environments
 .venv/
