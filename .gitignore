@@ -71,6 +71,9 @@ desktop.ini
 .cache/
 .parcel-cache/
 .turbo/
+.npm-cache/
+**/.npm-cache/
+
 
 # Test Reports & Traces
 playwright-report/
