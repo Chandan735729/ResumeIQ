@@ -177,6 +177,11 @@ model ResumeVersion {
   s3DocxUrl String?
 
   // Scores
+  // beforeScore: the deterministic ATS score of the ORIGINAL resume, captured
+  // at optimization time -- the only correct source for a before/after
+  // comparison. Nullable because versions created before this field existed
+  // have no recoverable true value (see compareVersion() in versions.service.ts).
+  beforeScore    Float?
   matchScore     Float // 0-100: How well resume matches JD
   atsScore       Float // 0-100: ATS compatibility
   recruiterScore Float // 0-100: How appealing to hiring manager

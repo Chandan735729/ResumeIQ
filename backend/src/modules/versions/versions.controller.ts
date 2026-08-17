@@ -41,7 +41,15 @@ function handleVersionError(res: Response, err: unknown): Response {
     }
   }
 
-  logger.error('Unexpected versions controller error');
+  // User-facing message stays generic, but the developer log must capture
+  // the real error -- e.g. a PDF/DOCX generation failure surfaces here as an
+  // unrecognized error shape, and without the actual message/stack it's
+  // undiagnosable from logs alone (see optimization.controller.ts for the
+  // same fix and rationale).
+  logger.error('Unexpected versions controller error', {
+    error: err instanceof Error ? err.message : String(err),
+    stack: err instanceof Error ? err.stack : undefined,
+  });
   return sendError(res, 'An unexpected error occurred.', 500);
 }
 

@@ -20,6 +20,7 @@ import { prisma } from '../../services/prisma.service';
 import { logger } from '../../services/logger.service';
 import { IAIProvider } from '../../services/ai/aiProvider.interface';
 import { documentGenerationService } from '../../services/documents/documentGeneration.service';
+import { verifyStructuralFieldsUnchanged } from '../../services/documents/contentPreservation';
 import { GeminiProvider } from '../../services/ai/geminiProvider';
 
 import { MockAIProvider } from '../../services/ai/mockAIProvider';
@@ -224,6 +225,25 @@ export async function optimizeResume(
     schemaValidation.data.summarySuggestion
   );
 
+  // 11b. Structural-integrity regression tripwire: employer/title/date/
+  // institution/degree/certification fields must never change through
+  // optimization in any mode. This should never fire under correct
+  // operation (see contentPreservation.ts for why) -- if it does, something
+  // upstream corrupted a fact-bearing field, and that must fail loudly
+  // rather than silently ship a resume with a wrong employer or date.
+  const structuralIntegrity = verifyStructuralFieldsUnchanged(resumeInput, diffReport.optimizedLayout);
+  if (!structuralIntegrity.ok) {
+    logger.error('Optimization altered a structural fact-bearing field', {
+      userId,
+      resumeId: resume.id,
+      violations: structuralIntegrity.violations,
+    });
+    throw {
+      code: OptimizationErrorCode.SCHEMA_VALIDATION_FAILED,
+      message: 'Optimization result failed integrity validation.',
+    } as OptimizationError;
+  }
+
   // 12. Authoritative deterministic ATS re-scoring
   const scoreComparison = rescoreOptimizedResume(
     diffReport.optimizedLayout,
@@ -280,6 +300,7 @@ export async function optimizeResume(
       optimizedText: diffReport.optimizedText,
       aiChanges: JSON.stringify(diffReport.changes),
       isValid: true,
+      beforeScore: scoreComparison.beforeScore,
       matchScore: scoreComparison.afterScore,
       atsScore: scoreComparison.afterScore,
       recruiterScore: scoreComparison.afterScore,

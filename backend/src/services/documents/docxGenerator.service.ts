@@ -14,7 +14,9 @@ import {
   Document,
   Packer,
   Paragraph,
+  ParagraphChild,
   TextRun,
+  ExternalHyperlink,
   HeadingLevel,
   AlignmentType,
 } from 'docx';
@@ -25,7 +27,8 @@ import type {
   GeneratedDocumentResult,
 } from './document.interface';
 import { resolveSectionOrder } from './sectionOrder';
-import { sanitizeResumeForRender, sanitizeText, dedupeContactTokens } from './textSanitizer';
+import { sanitizeResumeForRender, sanitizeText } from './textSanitizer';
+import { dedupeLinkableTokens, linkableToken, type LinkableToken } from './hyperlinks';
 
 export class DocxGeneratorService implements IDocumentGenerator {
   public readonly format = 'docx';
@@ -124,44 +127,67 @@ export class DocxGeneratorService implements IDocumentGenerator {
     const contact = resume.contact;
     const email = options?.contactEmail || contact?.email;
     const phone = options?.contactPhone || contact?.phone;
-    const line1 = dedupeContactTokens([email, phone, contact?.location]);
+    const line1 = dedupeLinkableTokens(
+      [linkableToken(email, 'email'), linkableToken(phone), linkableToken(contact?.location)].filter(
+        (t): t is LinkableToken => t !== null
+      )
+    );
     if (line1.length > 0) {
       paragraphs.push(
         new Paragraph({
           alignment: AlignmentType.CENTER,
           spacing: { after: 80 },
-          children: [
-            new TextRun({
-              text: line1.join('  |  '),
-              size: 18, // 9pt
-              color: '4A5568',
-            }),
-          ],
+          children: this.renderLinkableRuns(line1, 18, '4A5568'),
         })
       );
     }
 
-    const line2 = dedupeContactTokens(
-      [contact?.linkedin, contact?.github, contact?.website, ...(contact?.otherLinks || [])],
-      line1
+    const line2 = dedupeLinkableTokens(
+      [
+        linkableToken(contact?.linkedin, 'web'),
+        linkableToken(contact?.github, 'web'),
+        linkableToken(contact?.website, 'web'),
+        ...(contact?.otherLinks || []).map(l => linkableToken(l, 'web')),
+      ].filter((t): t is LinkableToken => t !== null),
+      line1.map(t => t.text)
     );
     if (line2.length > 0) {
       paragraphs.push(
         new Paragraph({
           alignment: AlignmentType.CENTER,
           spacing: { after: 200 },
-          children: [
-            new TextRun({
-              text: line2.join('  |  '),
-              size: 17,
-              color: '4A5568',
-            }),
-          ],
+          children: this.renderLinkableRuns(line2, 17, '4A5568'),
         })
       );
     }
 
     return paragraphs;
+  }
+
+  /**
+   * Builds paragraph children for a pipe-separated contact line, using a real
+   * `ExternalHyperlink` (not plain text) for any token that has a URL --
+   * unlike PDFKit, `docx` paragraph children support this per-run, so no
+   * width-computation overlay trick is needed here.
+   */
+  private renderLinkableRuns(tokens: LinkableToken[], size: number, color: string): ParagraphChild[] {
+    const runs: ParagraphChild[] = [];
+    tokens.forEach((token, i) => {
+      if (i > 0) {
+        runs.push(new TextRun({ text: '  |  ', size, color }));
+      }
+      if (token.url) {
+        runs.push(
+          new ExternalHyperlink({
+            link: token.url,
+            children: [new TextRun({ text: token.text, size, color: '2B6CB0', underline: {} })],
+          })
+        );
+      } else {
+        runs.push(new TextRun({ text: token.text, size, color }));
+      }
+    });
+    return runs;
   }
 
   private renderSummary(resume: ResumeMatchInput, options?: DocumentGenerationOptions): Paragraph[] {
@@ -369,13 +395,14 @@ export class DocxGeneratorService implements IDocumentGenerator {
     for (const cert of resume.certifications) {
       const name = cert.name || 'Certification';
       const auth = cert.authority ? ` — ${cert.authority}` : '';
+      const date = cert.date ? ` (${cert.date})` : '';
       paragraphs.push(
         new Paragraph({
           bullet: { level: 0 },
           spacing: { after: 60 },
           children: [
             new TextRun({
-              text: `${name}${auth}`,
+              text: `${name}${auth}${date}`,
               size: 19,
               color: '2D3748',
             }),

@@ -67,6 +67,7 @@ export async function listVersions(
       resumeId: v.resumeId,
       versionNumber: v.versionNumber,
       optimizationType: v.optimizationType,
+      beforeScore: v.beforeScore,
       overallScore: v.overallScore,
       atsScore: v.atsScore,
       matchScore: v.matchScore,
@@ -138,6 +139,7 @@ export async function getVersion(
     resumeId: version.resumeId,
     versionNumber: version.versionNumber,
     optimizationType: version.optimizationType,
+    beforeScore: version.beforeScore,
     overallScore: version.overallScore,
     atsScore: version.atsScore,
     matchScore: version.matchScore,
@@ -190,8 +192,16 @@ export async function compareVersion(
     }
   }
 
-  // Get original score if match result exists, or baseline
-  const originalScore = version.metrics?.atsCompatibilityScore || version.atsScore;
+  // The version's own `beforeScore` (captured at optimization time from the
+  // ORIGINAL, pre-optimization resume) is the only correct source for this
+  // comparison. `metrics.atsCompatibilityScore` is a different, after-only
+  // metric (see prisma/schema.prisma) -- using it here was the root cause of
+  // every version's comparison page showing a 0.0 delta regardless of what
+  // optimization actually changed, since it equals `afterScore` by
+  // construction. Versions created before `beforeScore` existed have no
+  // recoverable true value, so they fall back to today's (known-inaccurate)
+  // behavior rather than crashing.
+  const originalScore = version.beforeScore ?? version.atsScore;
   const afterScore = version.overallScore;
   const scoreDelta = Math.round((afterScore - originalScore) * 10) / 10;
 

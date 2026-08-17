@@ -231,25 +231,55 @@ export class MockAIProvider implements IAIProvider {
 
       case 'success_standard':
       default: {
-        // Content-derived (not statically hardcoded): picks a real line out of
-        // the actual candidate resume text and applies a small, mode-specific,
-        // evidence-safe transformation. This lets the 3 optimization modes be
-        // demonstrated end-to-end against arbitrary real resumes without a
-        // live provider — a fully static canned response would only
-        // coincidentally pass the fact guardrail for the one resume text it
-        // was hand-written for.
+        // Content-derived (not statically hardcoded): picks real content out of
+        // the actual candidate resume/findings and applies a small,
+        // mode-specific, evidence-safe transformation. This lets the 3
+        // optimization modes be demonstrated end-to-end against arbitrary
+        // real resumes without a live provider — a fully static canned
+        // response would only coincidentally pass the fact guardrail for the
+        // one resume text it was hand-written for.
         const optimizationType = context.optimizationType || 'conservative';
-        const sourceLine = pickSourceLine(context.untrustedResumeData);
 
         const changes: Array<{
-          section: 'experience';
+          section: 'experience' | 'skills';
           itemId: string;
           original: string;
           suggested: string;
           reason: string;
           evidence: string[];
         }> = [];
+        const warnings: string[] = [];
 
+        // ats_focused: promote an evidenced-but-unlisted skill into the
+        // explicit skills list. This is what real ATS-focused optimization
+        // should do, and -- critically -- it's the one transformation that
+        // reliably moves the DETERMINISTIC score: applyChangesToResume's
+        // 'skills' branch pushes `suggested` straight into the structured
+        // skills[] array (changeTracker.ts), which is what matchResumeToJob
+        // actually reads. Editing prose text alone (the old approach here)
+        // never touched skills[]/experience[].bullets[] reliably, so the
+        // scorer's input never changed -- that's why every real-fixture run
+        // used to show a +0.0 delta regardless of mode.
+        //
+        // "Partial" is the matching engine's own classification for a skill
+        // it already found evidenced in the resume's raw text but that isn't
+        // in the explicit skills list -- so this is guardrail-safe by
+        // construction, not a fabrication.
+        if (optimizationType === 'ats_focused' && context.deterministicFindings.partialSkills.length > 0) {
+          const skill = context.deterministicFindings.partialSkills[0];
+          changes.push({
+            section: 'skills',
+            itemId: 'skill-promote-1',
+            original: skill,
+            suggested: skill,
+            reason: `"${skill}" is already evidenced in the resume text but wasn't in the explicit skills list; made it explicit for ATS keyword matching.`,
+            evidence: [skill],
+          });
+        } else if (optimizationType === 'ats_focused') {
+          warnings.push('No evidenced-but-unlisted skills found to promote for this resume/JD pairing.');
+        }
+
+        const sourceLine = pickSourceLine(context.untrustedResumeData);
         if (sourceLine) {
           const { suggested, reason, evidence } = transformLine(
             sourceLine,
@@ -265,13 +295,15 @@ export class MockAIProvider implements IAIProvider {
             reason,
             evidence,
           });
+        } else {
+          warnings.push('Mock provider found no suitable resume line to optimize.');
         }
 
         return {
           rawContent: JSON.stringify({
             changes,
             preservedFacts: [],
-            warnings: sourceLine ? [] : ['Mock provider found no suitable resume line to optimize.'],
+            warnings,
           }),
           model: options?.model || 'gemini-mock',
           durationMs: Date.now() - startTime,

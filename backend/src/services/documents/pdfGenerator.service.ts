@@ -22,7 +22,8 @@ import type {
   GeneratedDocumentResult,
 } from './document.interface';
 import { resolveSectionOrder } from './sectionOrder';
-import { sanitizeResumeForRender, sanitizeText, joinTokensUnbreakable, dedupeContactTokens } from './textSanitizer';
+import { sanitizeResumeForRender, sanitizeText, joinTokensUnbreakable } from './textSanitizer';
+import { dedupeLinkableTokens, linkableToken, type LinkableToken } from './hyperlinks';
 
 const PAGE_MARGIN = { top: 40, bottom: 40, left: 45, right: 45 };
 const PAGE_BOTTOM_Y = 792 - PAGE_MARGIN.bottom; // LETTER height 792pt
@@ -132,19 +133,76 @@ export class PdfGeneratorService implements IDocumentGenerator {
     const contact = resume.contact;
     const email = options?.contactEmail || contact?.email;
     const phone = options?.contactPhone || contact?.phone;
-    const line1 = dedupeContactTokens([email, phone, contact?.location]);
+    const line1 = dedupeLinkableTokens(
+      [linkableToken(email, 'email'), linkableToken(phone), linkableToken(contact?.location)].filter(
+        (t): t is LinkableToken => t !== null
+      )
+    );
     if (line1.length > 0) {
       doc.moveDown(0.3);
-      doc.fontSize(9).font('Helvetica').fillColor('#4a5568').text(joinTokensUnbreakable(line1, '  |  '), { align: 'center' });
+      this.renderLinkableLine(doc, line1, 9, '#4a5568');
     }
 
-    const line2 = dedupeContactTokens([contact?.linkedin, contact?.github, contact?.website, ...(contact?.otherLinks || [])], line1);
+    const line2 = dedupeLinkableTokens(
+      [
+        linkableToken(contact?.linkedin, 'web'),
+        linkableToken(contact?.github, 'web'),
+        linkableToken(contact?.website, 'web'),
+        ...(contact?.otherLinks || []).map(l => linkableToken(l, 'web')),
+      ].filter((t): t is LinkableToken => t !== null),
+      line1.map(t => t.text)
+    );
     if (line2.length > 0) {
       doc.moveDown(0.15);
-      doc.fontSize(8.5).font('Helvetica').fillColor('#4a5568').text(joinTokensUnbreakable(line2, '  |  '), { align: 'center' });
+      this.renderLinkableLine(doc, line2, 8.5, '#4a5568');
     }
 
     doc.moveDown(0.8);
+  }
+
+  /**
+   * Renders a centered, pipe-separated contact line exactly as before (same
+   * joined-string + joinTokensUnbreakable call, so no visual change), then
+   * overlays real clickable link annotations (`doc.link`) computed from each
+   * token's rendered width -- PDFKit's `link` text option only applies to an
+   * entire `.text()` call, not to sub-spans of a joined string, so per-token
+   * links need this two-pass approach: render the visible line, then attach
+   * invisible clickable rectangles on top of the substrings that have a URL.
+   */
+  private renderLinkableLine(
+    doc: typeof PDFDocument.prototype,
+    tokens: LinkableToken[],
+    fontSize: number,
+    color: string
+  ): void {
+    const separator = '  |  ';
+    doc.fontSize(fontSize).font('Helvetica').fillColor(color);
+
+    const joinedText = joinTokensUnbreakable(
+      tokens.map(t => t.text),
+      separator
+    );
+    const totalWidth = doc.widthOfString(joinedText);
+    const lineTop = doc.y;
+    doc.text(joinedText, { align: 'center' });
+
+    // Only overlay links when the line rendered as a single (unwrapped) line --
+    // if it wrapped, our linear width-based x-offsets would no longer line up
+    // with the wrapped glyph positions, so skip rather than risk misplaced
+    // clickable regions.
+    const usableWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+    if (totalWidth > usableWidth) return;
+
+    let cursorX = doc.page.margins.left + (usableWidth - totalWidth) / 2;
+    const separatorWidth = doc.widthOfString(separator);
+    tokens.forEach(token => {
+      const displayText = token.text.replace(/ /g, String.fromCharCode(0xa0));
+      const tokenWidth = doc.widthOfString(displayText);
+      if (token.url) {
+        doc.link(cursorX, lineTop, tokenWidth, doc.currentLineHeight(), token.url);
+      }
+      cursorX += tokenWidth + separatorWidth;
+    });
   }
 
   private renderSummary(
@@ -267,7 +325,8 @@ export class PdfGeneratorService implements IDocumentGenerator {
       this.ensureSpace(doc, 15);
       const name = cert.name || 'Certification';
       const auth = cert.authority ? ` — ${cert.authority}` : '';
-      doc.fontSize(9.5).font('Helvetica').fillColor('#2d3748').text(`•  ${name}${auth}`, { indent: 10 });
+      const date = cert.date ? ` (${cert.date})` : '';
+      doc.fontSize(9.5).font('Helvetica').fillColor('#2d3748').text(`•  ${name}${auth}${date}`, { indent: 10 });
     }
     doc.moveDown(0.8);
   }

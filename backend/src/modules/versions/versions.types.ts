@@ -24,6 +24,8 @@ export interface ResumeVersionSummaryDTO {
   resumeId: string;
   versionNumber: number;
   optimizationType: string;
+  /** The original resume's deterministic ATS score, captured at optimization time. Null for versions created before this field existed. */
+  beforeScore: number | null;
   overallScore: number;
   atsScore: number;
   matchScore: number;

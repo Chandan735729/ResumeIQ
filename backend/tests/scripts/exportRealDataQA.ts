@@ -28,8 +28,10 @@ import { runFactGuardrails, wordDriftRatio } from '../../src/services/ai/guardra
 import { applyChangesToResume } from '../../src/services/ai/changeTracker';
 import { rescoreOptimizedResume } from '../../src/services/ai/rescorer.service';
 import { documentGenerationService } from '../../src/services/documents/documentGeneration.service';
-import { verifyContentPreserved } from '../../src/services/documents/contentPreservation';
+import { verifyContentPreserved, verifyStructuralFieldsUnchanged } from '../../src/services/documents/contentPreservation';
 import { sanitizeResumeForRender } from '../../src/services/documents/textSanitizer';
+import { resolveSectionOrder } from '../../src/services/documents/sectionOrder';
+import { compareTemplateSnapshots, type TemplateComparisonReport } from '../../src/services/documents/templateSnapshot';
 import type { OptimizationType } from '../../src/modules/optimization/optimization.types';
 
 const JD_TEXT = `We are hiring a Software Engineer. Required skills: Python, JavaScript, SQL, Git, communication,
@@ -81,6 +83,8 @@ interface FixtureResult {
   parseError?: string;
   modes: ModeResult[];
   overallPass: boolean;
+  templateReport?: TemplateComparisonReport;
+  structuralIntegrityViolations: string[];
 }
 
 async function runFixture(filePath: string): Promise<FixtureResult> {
@@ -105,6 +109,7 @@ async function runFixture(filePath: string): Promise<FixtureResult> {
       parseError: err?.message || String(err),
       modes: [],
       overallPass: false,
+      structuralIntegrityViolations: [],
     };
   }
 
@@ -127,6 +132,7 @@ async function runFixture(filePath: string): Promise<FixtureResult> {
 
   const provider = new MockAIProvider('success_standard');
   const modeResults: ModeResult[] = [];
+  const structuralIntegrityViolations: string[] = [];
 
   for (const mode of MODES) {
     const promptContext = buildOptimizationPrompt(parsed.rawText, JD_TEXT, beforeMatch, CURRENT_PROMPT_VERSION, mode);
@@ -153,6 +159,11 @@ async function runFixture(filePath: string): Promise<FixtureResult> {
     const factReport = runFactGuardrails(schemaValidation.data.changes, resumeInput.rawText, resumeInput.skills, mode);
     const diffReport = applyChangesToResume(resumeInput, factReport.approvedChanges, factReport.rejectedChanges, schemaValidation.data.summarySuggestion);
     const scoreComparison = rescoreOptimizedResume(diffReport.optimizedLayout, structuredJD, beforeScoreResult);
+
+    const integrity = verifyStructuralFieldsUnchanged(resumeInput, diffReport.optimizedLayout);
+    if (!integrity.ok) {
+      structuralIntegrityViolations.push(...integrity.violations.map(v => `[${mode}] ${v}`));
+    }
 
     const appliedChanges = diffReport.changes.filter(c => c.isApplied);
     const avgWordDrift = appliedChanges.length > 0
@@ -215,7 +226,11 @@ async function runFixture(filePath: string): Promise<FixtureResult> {
     modeResults.push(result);
   }
 
-  const overallPass = modeResults.every(m => m.pdf.ok && m.docx.ok);
+  const overallPass = modeResults.every(m => m.pdf.ok && m.docx.ok) && structuralIntegrityViolations.length === 0;
+
+  const sourceSectionOrder = Array.from(new Set(parsed.sections.map(s => s.type)));
+  const renderedSectionOrder = resolveSectionOrder({ sectionOrder: sourceSectionOrder });
+  const templateReport = compareTemplateSnapshots(parsed.metadata, sourceSectionOrder, renderedSectionOrder);
 
   return {
     fileName,
@@ -226,6 +241,8 @@ async function runFixture(filePath: string): Promise<FixtureResult> {
     experience: parsed.experience.length,
     education: parsed.education.length,
     projects: parsed.projects.length,
+    templateReport,
+    structuralIntegrityViolations,
     certifications: parsed.certifications.length,
     languages: parsed.languages.length,
     modes: modeResults,
@@ -261,9 +278,17 @@ async function main() {
   for (const r of results) {
     console.log(`${r.overallPass ? 'PASS' : 'FAIL'}  ${r.fileName}  (sections=${r.sections} skills=${r.skills} exp=${r.experience} edu=${r.education} proj=${r.projects} cert=${r.certifications} lang=${r.languages})`);
     if (r.parseError) console.log(`  PARSE ERROR: ${r.parseError}`);
+    if (r.structuralIntegrityViolations.length > 0) {
+      console.log(`  STRUCTURAL INTEGRITY VIOLATIONS: ${r.structuralIntegrityViolations.join('; ')}`);
+    }
     for (const m of r.modes) {
       const status = m.pdf.ok && m.docx.ok ? 'ok' : 'FAIL';
       console.log(`  [${m.mode}] ${status}  score ${m.beforeScore.toFixed(1)} -> ${m.afterScore.toFixed(1)} (${m.scoreDelta >= 0 ? '+' : ''}${m.scoreDelta.toFixed(1)})  applied=${m.changesApplied}/${m.changesProposed} drift=${m.avgWordDrift.toFixed(2)}  pdf=${m.pdf.ok ? 'ok' : m.pdf.error} docx=${m.docx.ok ? 'ok' : m.docx.error}`);
+    }
+    if (r.templateReport) {
+      const unsupported = r.templateReport.fields.filter(f => f.status === 'UNSUPPORTED').map(f => f.field);
+      const changed = r.templateReport.fields.filter(f => f.status === 'CHANGED').map(f => f.field);
+      console.log(`  template: UNSUPPORTED=[${unsupported.join(',')}] CHANGED=[${changed.join(',') || 'none'}]`);
     }
   }
   console.log(`\nOVERALL: ${overallPass ? 'PASS' : 'FAIL'}`);
@@ -286,6 +311,9 @@ function renderMarkdown(results: FixtureResult[], overallPass: boolean): string 
     if (r.parseError) {
       lines.push(`- **PARSE ERROR**: ${r.parseError}`);
     }
+    if (r.structuralIntegrityViolations.length > 0) {
+      lines.push(`- **STRUCTURAL INTEGRITY VIOLATIONS**: ${r.structuralIntegrityViolations.join('; ')}`);
+    }
     lines.push('');
     lines.push('| Mode | ATS Before | ATS After | Delta | Applied/Proposed | Avg Drift | PDF | DOCX |');
     lines.push('|---|---|---|---|---|---|---|---|');
@@ -293,6 +321,14 @@ function renderMarkdown(results: FixtureResult[], overallPass: boolean): string 
       lines.push(`| ${m.mode} | ${m.beforeScore.toFixed(1)} | ${m.afterScore.toFixed(1)} | ${m.scoreDelta.toFixed(1)} | ${m.changesApplied}/${m.changesProposed} | ${m.avgWordDrift.toFixed(2)} | ${m.pdf.ok ? 'OK' : 'FAIL: ' + m.pdf.error} | ${m.docx.ok ? 'OK' : 'FAIL: ' + m.docx.error} |`);
     }
     lines.push('');
+    if (r.templateReport) {
+      lines.push('| Template Field | Status | Original | Rendered | Note |');
+      lines.push('|---|---|---|---|---|');
+      for (const f of r.templateReport.fields) {
+        lines.push(`| ${f.field} | ${f.status} | ${f.original} | ${f.rendered} | ${f.note || ''} |`);
+      }
+      lines.push('');
+    }
   }
   return lines.join('\n');
 }

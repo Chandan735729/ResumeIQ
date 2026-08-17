@@ -42,7 +42,14 @@ function handleOptimizationError(res: Response, err: unknown): Response {
     }
   }
 
-  logger.error('Unexpected optimization controller error');
+  // User-facing message stays generic (no internals leaked to the client),
+  // but the developer log must capture the real error -- without this, a
+  // genuine bug (DB failure, unhandled exception in rendering/scoring/etc.)
+  // is undiagnosable from logs alone.
+  logger.error('Unexpected optimization controller error', {
+    error: err instanceof Error ? err.message : String(err),
+    stack: err instanceof Error ? err.stack : undefined,
+  });
   return sendError(res, 'An unexpected error occurred during optimization.', 500);
 }
 

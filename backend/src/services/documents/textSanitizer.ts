@@ -57,42 +57,10 @@ export function sanitizeText(input: string | undefined | null): string {
     .trim();
 }
 
-/**
- * Filters and de-duplicates contact header tokens (email, phone, location,
- * links, ...) before rendering.
- *
- * Root cause this exists to fix: some real-world parsed resumes have a
- * "kitchen sink" field -- e.g. `contact.location` or `contact.otherLinks[0]`
- * holding the ENTIRE raw contact line ("email | phone | city | github link")
- * instead of just the location -- alongside the correctly-isolated
- * `contact.email`/`contact.phone`/`contact.github` fields. Rendering both
- * verbatim visibly repeats the same contact details 2-3 times in the header.
- * This is a parser data-quality issue (out of scope to fix at its source
- * here), but a "kitchen sink" field never contributes new information once
- * its pieces are already shown individually, so it's always safe to drop a
- * candidate token that's redundant with (equal to, a substring of, or a
- * superset of) one already accepted.
- */
-export function dedupeContactTokens(
-  tokens: Array<string | undefined | null>,
-  alreadyAccepted: string[] = []
-): string[] {
-  const accepted: string[] = [];
-  const acceptedNormalized: string[] = alreadyAccepted.map(v => v.toLowerCase());
-  for (const raw of tokens) {
-    if (!raw) continue;
-    const value = raw.trim();
-    if (value.length === 0) continue;
-    const normalized = value.toLowerCase();
-    const isRedundant = acceptedNormalized.some(
-      existing => normalized === existing || normalized.includes(existing) || existing.includes(normalized)
-    );
-    if (isRedundant) continue;
-    accepted.push(value);
-    acceptedNormalized.push(normalized);
-  }
-  return accepted;
-}
+// Contact-token de-duplication (the "kitchen sink field" problem, e.g.
+// `contact.location` sometimes holding the entire raw contact line) now
+// lives in hyperlinks.ts as dedupeLinkableTokens(), since both generators
+// need it to carry a URL alongside the deduped text.
 
 /**
  * Joins short tokens (skills, technologies, languages) with a separator for
