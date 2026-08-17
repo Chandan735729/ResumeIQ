@@ -104,6 +104,9 @@ describe('Phase 6: Resume Versions & Document Generation Integration', () => {
 
   beforeAll(async () => {
     process.env.NODE_ENV = 'test';
+    // This suite registers many fresh users; without an explicit bypass the
+    // real 10/hour production register limit gets exhausted mid-suite.
+    process.env.RATE_LIMIT_TEST_BYPASS = 'true';
     process.env.DATABASE_URL = 'postgresql://resumeiq_user:resumeiq_pass@localhost:5432/resumeiq';
     process.env.JWT_SECRET = jwtSecret;
     process.env.FRONTEND_URL = 'http://localhost:3001';
@@ -206,7 +209,13 @@ describe('Phase 6: Resume Versions & Document Generation Integration', () => {
       expect(docxRes.status).toBe(200);
       expect(docxRes.headers['content-type']).toContain('wordprocessingml.document');
       expect(docxRes.headers['content-disposition']).toContain('attachment');
-      expect(docxRes.body.length).toBeGreaterThan(500);
+      // Unlike application/pdf, superagent doesn't have a built-in binary parser
+      // registered for the DOCX MIME type, so docxRes.body stays `{}` instead of
+      // a Buffer here. The server sets Content-Length explicitly (see
+      // versions.controller.ts), so assert on that instead of the client's
+      // (in this case empty) parsed body — it verifies the same thing: a
+      // substantial, non-empty document was actually returned.
+      expect(Number(docxRes.headers['content-length'])).toBeGreaterThan(500);
 
       // 8. Delete Version
       const delRes = await request(app)

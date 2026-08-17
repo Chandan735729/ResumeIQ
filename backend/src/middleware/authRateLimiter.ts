@@ -6,9 +6,22 @@
 
 import rateLimit from 'express-rate-limit';
 
+// Production limits stay fully enforced by default. A very high ceiling is applied
+// ONLY when RATE_LIMIT_TEST_BYPASS is the exact literal string "true", which each
+// DB-backed integration test file sets explicitly in beforeAll() before dynamically
+// importing the app (see tests/integration/*.integration.test.ts). This is
+// deliberately NOT tied to NODE_ENV alone —
+// a misconfigured NODE_ENV=test in a real deployment must not silently disable
+// this protection. Multiple integration test files each register many fresh
+// users per run; without this, the real production limits (10 registrations/hour,
+// 15 logins/15min, shared in-memory store) get exhausted mid-suite and tests fail
+// for reasons unrelated to what they're testing.
+const isTestBypass = process.env.RATE_LIMIT_TEST_BYPASS === 'true';
+const TEST_BYPASS_MAX = 100_000;
+
 export const loginRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 15, // Max 15 login attempts per 15 minutes
+  max: isTestBypass ? TEST_BYPASS_MAX : 15, // Max 15 login attempts per 15 minutes
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -27,7 +40,7 @@ export const loginRateLimiter = rateLimit({
 
 export const registerRateLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 10, // Max 10 account creations per hour per IP
+  max: isTestBypass ? TEST_BYPASS_MAX : 10, // Max 10 account creations per hour per IP
   standardHeaders: true,
   legacyHeaders: false,
   message: {

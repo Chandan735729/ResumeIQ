@@ -95,6 +95,9 @@ describe('Phase 5: AI Optimization Integration', () => {
 
   beforeAll(async () => {
     process.env.NODE_ENV = 'test';
+    // This suite registers many fresh users; without an explicit bypass the
+    // real 10/hour production register limit gets exhausted mid-suite.
+    process.env.RATE_LIMIT_TEST_BYPASS = 'true';
     process.env.DATABASE_URL = 'postgresql://resumeiq_user:resumeiq_pass@localhost:5432/resumeiq';
     process.env.JWT_SECRET = jwtSecret;
     process.env.FRONTEND_URL = 'http://localhost:3001';

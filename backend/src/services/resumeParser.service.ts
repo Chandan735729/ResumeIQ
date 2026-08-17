@@ -517,18 +517,34 @@ export function detectSections(lines: string[]): IParsedSection[] {
 
   for (let index = 0; index < sectionLines.length; index += 1) {
     const line = sectionLines[index];
-    const sectionType = classifySectionHeading(line);
+    const heading = classifyHeadingLine(line);
 
-    if (sectionType) {
+    // "Languages:" is genuinely ambiguous: as a standalone section it means
+    // spoken languages, but as a bare category label nested inside an
+    // already-open Skills section ("Languages: Python, Go, TypeScript") it is
+    // shorthand for "Programming Languages:" — a skill category, not a new
+    // top-level section. Only the bare word triggers this (not "Spoken
+    // Languages" / "Foreign Languages", which are unambiguous), and only when
+    // it carries inline content, since a bare "LANGUAGES" heading with nothing
+    // on the same line is the normal, unambiguous start of a real spoken-
+    // language section. Context (what section is currently open) resolves the
+    // ambiguity that text alone cannot.
+    const isBareLanguageLabelInsideSkills =
+      heading?.type === 'languages' &&
+      current?.type === 'skills' &&
+      Boolean(heading.remainder) &&
+      /^languages?$/i.test(heading.headingText.trim());
+
+    if (heading && !isBareLanguageLabelInsideSkills) {
       if (current) {
         activeSections.push(finalizeSection(current));
       }
 
       current = {
         id: `section-${activeSections.length + 1}`,
-        title: line,
-        type: sectionType,
-        rawText: '',
+        title: heading.headingText,
+        type: heading.type,
+        rawText: heading.remainder,
         normalizedText: '',
         startLine: index + 1,
         endLine: index + 1,
@@ -573,7 +589,39 @@ export function detectSections(lines: string[]): IParsedSection[] {
     });
   }
 
-  return activeSections;
+  return mergeAdjacentSameTypeSections(activeSections);
+}
+
+/**
+ * Merges consecutive sections of the same type into one.
+ *
+ * Two situations produce spurious adjacent duplicates that would otherwise
+ * fragment real content: (1) a leading name/contact-adjacent line that isn't
+ * recognized as a heading becomes an implicit "Summary" pseudo-section, and a
+ * real Summary/Objective heading immediately follows it; (2) a resume repeats
+ * the same section across a page boundary. Keeping the higher-confidence
+ * (real, detected) title and concatenating text in original order preserves
+ * all content while presenting one logical section downstream.
+ */
+function mergeAdjacentSameTypeSections(sections: IParsedSection[]): IParsedSection[] {
+  const merged: IParsedSection[] = [];
+
+  for (const section of sections) {
+    const prev = merged[merged.length - 1];
+    if (prev && prev.type === section.type) {
+      prev.rawText = [prev.rawText, section.rawText].filter(Boolean).join('\n');
+      prev.normalizedText = normalizeText(prev.rawText);
+      prev.endLine = section.endLine;
+      if (section.confidence > prev.confidence) {
+        prev.title = section.title;
+        prev.confidence = section.confidence;
+      }
+      continue;
+    }
+    merged.push({ ...section });
+  }
+
+  return merged;
 }
 
 function isContactLine(line: string): boolean {
@@ -582,18 +630,50 @@ function isContactLine(line: string): boolean {
     || /(linkedin\.com|github\.com|www\.|https?:\/\/)/i.test(line);
 }
 
-function classifySectionHeading(line: string): ParsedSectionType | null {
+interface HeadingClassification {
+  type: ParsedSectionType;
+  headingText: string;
+  remainder: string;
+}
+
+// Each pattern is anchored at the start; the matched substring's length is used to
+// split "HEADING content-on-same-line" into a clean title plus body content, since
+// resumes frequently place the first skill/date/company on the same physical line
+// as the section heading (e.g. "SKILLS Python, JavaScript").
+const HEADING_PATTERNS: Array<[ParsedSectionType, RegExp]> = [
+  ['skills', /^(technical\s*skills?|core\s*competenc\w*|skills?|technolog\w*|tools?\s*(&|and)\s*tech\w*|programming\s*lang\w*|software\s*skills?|it\s*skills?|tech\s*stack|developer\s*skills?|areas?\s*of\s*expertise|specialized\s*skills?|proficienc\w*|skillset|key\s*skills?|computer\s*skills?|relevant\s*skills?|domain\s*skills?)/i],
+  ['summary', /^(professional\s*summary|summary|profile|about\s*me|career\s*summary|objective|professional\s*profile|executive\s*summary|career\s*objective|personal\s*statement|biography)/i],
+  ['experience', /^(work\s*experience|professional\s*experience|experience|employment\s*history|career\s*history|work\s*history|relevant\s*experience|internships?|practical\s*experience)/i],
+  ['education', /^(education|academic\s*background|academic\s*credentials?|academic\s*qualifications?|education\s*(&|and)\s*training|degrees?|qualifications?|educational\s*qualifications?)/i],
+  ['projects', /^(projects?|academic\s*projects?|selected\s*projects?|project\s*experience|personal\s*projects?|side\s*projects?|key\s*projects?|technical\s*projects?|software\s*projects?)/i],
+  ['certifications', /^(certifications?|certificates?|licenses?|credentials?|certifications?\s*(&|and)\s*licenses?|professional\s*certifications?|accreditations?)/i],
+  ['languages', /^(languages?|language\s*proficiency|language\s*skills?|languages?\s*known|spoken\s*languages?|foreign\s*languages?|linguistic\s*skills?)/i],
+];
+
+const COMPACT_HEADING_PATTERNS: Array<[ParsedSectionType, RegExp]> = [
+  ['skills', /^(technicalskills|skills|technologies|toolsandtechnologies|programminglanguages|techstack|corecompetencies|areasofexpertise|skillset|keyskills|technicalproficiencies|technicalcompetencies|softwarequalifications|programmingtools|programmingskills|coretechnicalskills|skillsandtools|skillsandtechnologies)/i],
+  ['summary', /^(professionalsummary|summary|profile|aboutme|careersummary|objective|professionalprofile|executivesummary|careerobjective|personalstatement)/i],
+  ['experience', /^(workexperience|professionalexperience|experience|employmenthistory|careerhistory|workhistory|relevantexperience|internships)/i],
+  ['education', /^(education|academicbackground|academiccredentials|academicqualifications|educationandtraining|degrees|qualifications|educationalqualifications)/i],
+  ['projects', /^(projects|academicprojects|selectedprojects|projectexperience|personalprojects|sideprojects|keyprojects|technicalprojects|softwareprojects)/i],
+  ['certifications', /^(certifications|certificates|licenses|credentials|certificationsandlicenses|professionalcertifications|accreditations)/i],
+  ['languages', /^(languages|languageproficiency|languageskills|languagesknown|spokenlanguages|foreignlanguages|linguisticskills)/i],
+];
+
+function classifyHeadingLine(line: string): HeadingClassification | null {
   if (!line || line.length > 80) {
     return null;
   }
 
-  // Clean bullet characters, leading numbers, symbols, colons, horizontal rules
-  const cleaned = line
-    .replace(/^[•\-\*#>\d\.\)\(\]~]+\s*/, '')
-    .replace(/[:\-_~=|]+$/, '')
-    .trim();
+  // Strip leading bullet characters, numbers, symbols, tracking how many
+  // characters were removed so remainder positions can be mapped back to `line`.
+  const withoutLeadingBullet = line.replace(/^[•\-*#>\d.)(\]~]+\s*/, '');
+  const leadingStripLen = line.length - withoutLeadingBullet.length;
+  const contentStart = withoutLeadingBullet.trimStart();
+  const leadingWhitespaceLen = withoutLeadingBullet.length - contentStart.length;
 
-  if (!cleaned || cleaned.length > 60) {
+  const cleanedForLengthCheck = contentStart.replace(/[:\-_~=|]+$/, '').trim();
+  if (!cleanedForLengthCheck || cleanedForLengthCheck.length > 60) {
     return null;
   }
 
@@ -602,63 +682,37 @@ function classifySectionHeading(line: string): ParsedSectionType | null {
     return null;
   }
 
-  const lower = cleaned.toLowerCase();
+  const lower = contentStart.toLowerCase();
+
+  for (const [type, pattern] of HEADING_PATTERNS) {
+    const match = lower.match(pattern);
+    if (!match) continue;
+
+    const matchLength = match[0].length;
+    const headingText = contentStart.slice(0, matchLength).trim();
+    const remainderRaw = line.slice(leadingStripLen + leadingWhitespaceLen + matchLength);
+    const remainder = remainderRaw.replace(/^[\s:–—\-|]+/, '').trim();
+
+    // Reject prose false-positives: a body sentence that merely starts with a
+    // section keyword (e.g. "Experience shows that these outcomes are possible.")
+    // reads as a multi-word remainder ending in sentence punctuation. Real
+    // headings with inline content are lists/labels, not grammatical sentences.
+    if (remainder && /[.!?]$/.test(remainder) && remainder.split(/\s+/).length >= 3) {
+      continue;
+    }
+
+    return { type, headingText, remainder };
+  }
+
+  // Fallback: match against a whitespace/punctuation-stripped form of the line
+  // to catch headings mangled by extraction artifacts (e.g. "Ski lls"). Position
+  // information is lost once whitespace is stripped, so no remainder is split
+  // off here — the whole line is treated as the heading.
   const compact = lower.replace(/[\s&/_.,\-–—|:]+/g, '');
-
-  // Skills
-  if (
-    /^(technical\s*skills?|core\s*competenc|skills?|technolog|tools?\s*(&|and)\s*tech|programming\s*lang|software\s*skills?|it\s*skills?|tech\s*stack|developer\s*skills?|areas?\s*of\s*expertise|specialized\s*skills?|proficienc|skillset|key\s*skills?|computer\s*skills?|relevant\s*skills?|domain\s*skills?)/i.test(lower) ||
-    /^(technicalskills|skills|technologies|toolsandtechnologies|programminglanguages|techstack|corecompetencies|areasofexpertise|skillset|keyskills|technicalproficiencies|technicalcompetencies|softwarequalifications|programmingtools|programmingskills|coretechnicalskills|skillsandtools|skillsandtechnologies)/i.test(compact)
-  ) {
-    return 'skills';
-  }
-
-  // Summary
-  if (
-    /^(professional\s*summary|summary|profile|about\s*me|career\s*summary|objective|professional\s*profile|executive\s*summary|career\s*objective|personal\s*statement|biography)/i.test(lower) ||
-    /^(professionalsummary|summary|profile|aboutme|careersummary|objective|professionalprofile|executivesummary|careerobjective|personalstatement)/i.test(compact)
-  ) {
-    return 'summary';
-  }
-
-  // Experience
-  if (
-    /^(work\s*experience|professional\s*experience|experience|employment\s*history|career\s*history|work\s*history|relevant\s*experience|internships?|practical\s*experience)/i.test(lower) ||
-    /^(workexperience|professionalexperience|experience|employmenthistory|careerhistory|workhistory|relevantexperience|internships)/i.test(compact)
-  ) {
-    return 'experience';
-  }
-
-  // Education
-  if (
-    /^(education|academic\s*background|academic\s*credentials?|academic\s*qualifications?|education\s*(&|and)\s*training|degrees?|qualifications?|educational\s*qualifications?)/i.test(lower) ||
-    /^(education|academicbackground|academiccredentials|academicqualifications|educationandtraining|degrees|qualifications|educationalqualifications)/i.test(compact)
-  ) {
-    return 'education';
-  }
-
-  // Projects
-  if (
-    /^(projects?|academic\s*projects?|selected\s*projects?|project\s*experience|personal\s*projects?|side\s*projects?|key\s*projects?|technical\s*projects?|software\s*projects?)/i.test(lower) ||
-    /^(projects|academicprojects|selectedprojects|projectexperience|personalprojects|sideprojects|keyprojects|technicalprojects|softwareprojects)/i.test(compact)
-  ) {
-    return 'projects';
-  }
-
-  // Certifications
-  if (
-    /^(certifications?|certificates?|licenses?|credentials?|certifications?\s*(&|and)\s*licenses?|professional\s*certifications?|accreditations?)/i.test(lower) ||
-    /^(certifications|certificates|licenses|credentials|certificationsandlicenses|professionalcertifications|accreditations)/i.test(compact)
-  ) {
-    return 'certifications';
-  }
-
-  // Languages
-  if (
-    /^(languages?|language\s*proficiency|language\s*skills?|languages?\s*known|spoken\s*languages?|foreign\s*languages?|linguistic\s*skills?)/i.test(lower) ||
-    /^(languages|languageproficiency|languageskills|languagesknown|spokenlanguages|foreignlanguages|linguisticskills)/i.test(compact)
-  ) {
-    return 'languages';
+  for (const [type, pattern] of COMPACT_HEADING_PATTERNS) {
+    if (pattern.test(compact)) {
+      return { type, headingText: line.trim(), remainder: '' };
+    }
   }
 
   return null;
@@ -672,7 +726,26 @@ function finalizeSection(section: IParsedSection): IParsedSection {
   };
 }
 
-const CATEGORY_PREFIX_REGEX = /^(languages?|programming\s*languages?|web\s*technologies?|frameworks?|libraries|lib|databases?|db|developer\s*tools?|tools?|devops|cloud|platforms?|technologies|backend|frontend|fullstack|operating\s*systems?|os|concepts|others?|skills?|core\s*competencies?|proficiencies?|software|methodologies)\s*[:–—\-]\s*/i;
+const CATEGORY_PREFIX_REGEX = /^(languages?|programming\s*languages?|web\s*technologies?|frameworks?|libraries|lib|databases?|db|developer\s*tools?|tools?|devops|cloud|platforms?|technologies|backend|frontend|fullstack|operating\s*systems?|os|concepts|others?|skills?|core\s*competencies?|proficiencies?|software|methodologies)\s*[:–—-]\s*/i;
+
+// Catches category labels not in the enumerated allowlist above (e.g. "Application:",
+// "AWS:", "Testing:") by treating any short, comma-free, letter-led phrase before a
+// colon as a label to strip rather than a skill in its own right. Bounded to a short
+// label length and no comma so it never eats a real "Skill: description" style entry.
+const GENERIC_CATEGORY_LABEL_REGEX = /^([A-Za-z][A-Za-z0-9 /&+.-]{0,28}):\s+(?=\S)/;
+
+// A bare line with no delimiter of any kind, joining two or more words with "&",
+// is almost always a category group header (e.g. "Frameworks & Libraries",
+// "Cloud & Infrastructure") rather than a literal individual skill name.
+const BARE_CATEGORY_HEADER_REGEX = /^[A-Za-z][A-Za-z\s]*&[A-Za-z\s]*$/;
+
+function stripCategoryLabel(text: string): string {
+  const knownStripped = text.replace(CATEGORY_PREFIX_REGEX, '');
+  if (knownStripped !== text) {
+    return knownStripped.trim();
+  }
+  return text.replace(GENERIC_CATEGORY_LABEL_REGEX, '').trim();
+}
 
 export function extractSkills(sections: IParsedSection[], fullRawText?: string): string[] {
   const extractedSkills = new Set<string>();
@@ -685,17 +758,29 @@ export function extractSkills(sections: IParsedSection[], fullRawText?: string):
       if (!line) continue;
 
       // Remove leading bullet characters
-      line = line.replace(/^[•\-\*#>\d\.\)\(\]~]+\s*/, '').trim();
+      line = line.replace(/^[•\-*#>\d.)(\]~]+\s*/, '').trim();
 
-      // Remove category prefix (e.g. "Languages: " or "Frameworks: ")
-      line = line.replace(CATEGORY_PREFIX_REGEX, '').trim();
+      // Skip bare category-group header lines (no delimiter, joined by "&") —
+      // they label a group of following lines rather than naming a skill. A
+      // trailing colon with nothing after it ("Frameworks & Libraries:") is a
+      // label, not a delimiter — only a colon followed by content counts.
+      const withoutTrailingColon = line.replace(/[:\-–—]+\s*$/, '').trim();
+      const hasDelimiter = /[,;|\t•·]/.test(withoutTrailingColon)
+        || /\s+\/\s+|\s+–\s+|\s+—\s+/.test(withoutTrailingColon)
+        || /:\s*\S/.test(line);
+      if (!hasDelimiter && BARE_CATEGORY_HEADER_REGEX.test(withoutTrailingColon)) {
+        continue;
+      }
+
+      // Remove category prefix (e.g. "Languages: " or "Frameworks: " or "Application: ")
+      line = stripCategoryLabel(line);
 
       // Split on delimiters: commas, semicolons, pipes, bullets, middle dots, slashes with spaces, tabs
       const rawTokens = line.split(/[,;|\t•·\n]|\s+\/\s+|\s+–\s+|\s+—\s+/);
       for (let token of rawTokens) {
         token = token.trim();
-        token = token.replace(/^[•\-\*~:\s]+|[•\-\*~:\s]+$/g, '').trim();
-        token = token.replace(CATEGORY_PREFIX_REGEX, '').trim();
+        token = token.replace(/^[•\-*~:\s]+|[•\-*~:\s]+$/g, '').trim();
+        token = stripCategoryLabel(token);
 
         // Handle parentheses: e.g. "Python (Django, FastAPI)"
         if (token.includes('(') && token.includes(')')) {
@@ -935,35 +1020,38 @@ export function extractLanguageItems(sections: IParsedSection[], fullRawText?: s
   const section = sections.find((item) => item.type === 'languages');
   if (section) {
     const lines = section.normalizedText.split('\n');
-    for (let rawLine of lines) {
+    for (const rawLine of lines) {
       let line = rawLine.trim();
       if (!line) continue;
-      line = line.replace(/^[•\-\*#>\d\.\)\(\]~]+\s*/, '').trim();
-      line = line.replace(/^(languages?|languages?\s*known|spoken\s*languages?|foreign\s*languages?)\s*[:–—\-]\s*/i, '').trim();
+      line = line.replace(/^[•\-*#>\d.)(\]~]+\s*/, '').trim();
+      line = line.replace(/^(languages?|languages?\s*known|spoken\s*languages?|foreign\s*languages?)\s*[:–—-]\s*/i, '').trim();
 
       const tokens = line.split(/[,;|\t•·\n]|\s+–\s+|\s+—\s+/);
       for (const token of tokens) {
-        let t = token.trim();
+        const t = token.trim();
         if (!t) continue;
 
         let name = t;
         let proficiency: string | undefined = undefined;
 
+        // A token that is entirely punctuation (e.g. a stray "()" or ":" left
+        // over from extraction) filters down to an empty parts array — fall
+        // back to the original token rather than crashing on undefined.
         if (t.includes('(') && t.includes(')')) {
           const parts = t.split(/\(|\)/).map((p) => p.trim()).filter(Boolean);
-          name = parts[0];
+          name = parts[0] ?? t;
           proficiency = parts[1];
         } else if (t.includes(':')) {
           const parts = t.split(':').map((p) => p.trim()).filter(Boolean);
-          name = parts[0];
+          name = parts[0] ?? t;
           proficiency = parts[1];
         } else if (t.includes(' - ')) {
           const parts = t.split(' - ').map((p) => p.trim()).filter(Boolean);
-          name = parts[0];
+          name = parts[0] ?? t;
           proficiency = parts[1];
         }
 
-        name = name.replace(/^[•\-\*~:\s]+|[•\-\*~:\s]+$/g, '').trim();
+        name = name.replace(/^[•\-*~:\s]+|[•\-*~:\s]+$/g, '').trim();
         if (name && name.length >= 2 && name.length <= 30 && !seen.has(name.toLowerCase())) {
           seen.add(name.toLowerCase());
           languagesList.push({

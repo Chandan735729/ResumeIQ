@@ -16,6 +16,10 @@ describe('Phase 3 upload and lifecycle integration', () => {
 
   const authHeader = (token: string) => ({ Authorization: `Bearer ${token}` });
 
+  // fs/promises has no pathExists (that's an fs-extra API); fs.access resolving/
+  // rejecting is the standard fs/promises equivalent boolean check.
+  const pathExists = (target: string) => fs.access(target).then(() => true).catch(() => false);
+
   async function resetDatabase() {
     await prisma.auditLog.deleteMany();
     await prisma.refreshToken.deleteMany();
@@ -64,6 +68,9 @@ describe('Phase 3 upload and lifecycle integration', () => {
 
   beforeAll(async () => {
     process.env.NODE_ENV = 'test';
+    // This suite registers many fresh users; without an explicit bypass the
+    // real 10/hour production register limit gets exhausted mid-suite.
+    process.env.RATE_LIMIT_TEST_BYPASS = 'true';
     process.env.DATABASE_URL = 'postgresql://resumeiq_user:resumeiq_pass@localhost:5432/resumeiq';
     process.env.JWT_SECRET = jwtSecret;
     process.env.STORAGE_BASE_DIR = storageDir;
@@ -99,13 +106,30 @@ describe('Phase 3 upload and lifecycle integration', () => {
     const buffer = await createPdfBuffer([['Legacy doc upload']]);
     const user = await registerAndLogin('upload-doc');
 
+    // Explicit contentType so this exercises the extension-specific validator
+    // in uploads.validation.ts (UNSUPPORTED_EXTENSION), not multer's broader
+    // MIME-type fileFilter — without it, supertest infers "application/msword"
+    // from the .doc filename, which multer's fileFilter rejects first with a
+    // generic "Unsupported file type" message, never reaching the extension
+    // check this test is actually named for. This mirrors a real case: a file
+    // renamed to .doc while its actual bytes/MIME still look like a PDF.
     const response = await request(app)
       .post('/api/resumes/upload')
       .set(authHeader(user.accessToken))
-      .attach('file', buffer, 'legacy.doc');
+      .attach('file', buffer, { filename: 'legacy.doc', contentType: 'application/pdf' });
 
+    // This reaches uploadService's deeper validateFile() check, which wraps
+    // field errors via sendValidationError — the outer body.message is the
+    // generic "File validation failed"; the specific reason is in errors[].
     expect(response.status).toBe(400);
-    expect(response.body.message).toContain('Unsupported file extension');
+    expect(response.body.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'UNSUPPORTED_EXTENSION',
+          message: expect.stringContaining('Unsupported file extension'),
+        }),
+      ])
+    );
   });
 
   it('rejects invalid MIME types before storage', async () => {
@@ -160,7 +184,7 @@ describe('Phase 3 upload and lifecycle integration', () => {
     expect(resume?.fileName).toBe('evil.pdf');
     expect(resume?.originalFile?.s3Key).not.toContain('..');
 
-    const fileExists = await fs.pathExists(path.join(storageDir, resume!.originalFile!.s3Key));
+    const fileExists = await pathExists(path.join(storageDir, resume!.originalFile!.s3Key));
     expect(fileExists).toBe(true);
   });
 
@@ -199,13 +223,18 @@ describe('Phase 3 upload and lifecycle integration', () => {
     expect(resume?.extractedText).toContain('Taylor Brooks');
     expect(resume?.originalFile?.s3Key).toContain(`users/${user.userId}/originals`);
 
-    const storedFileExists = await fs.pathExists(path.join(storageDir, resume!.originalFile!.s3Key));
+    const storedFileExists = await pathExists(path.join(storageDir, resume!.originalFile!.s3Key));
     expect(storedFileExists).toBe(true);
   });
 
   it('marks parse failures, removes stored files, and avoids orphaned original-file rows', async () => {
     const user = await registerAndLogin('upload-failed-parse');
-    const blankBuffer = await createPdfBuffer([[]]);
+    // Two blank pages, not one: a single blank page serializes to ~1023 bytes,
+    // one byte under the 1KB minimum file size check, so the upload would be
+    // rejected as FILE_SIZE_TOO_SMALL (400) before ever reaching the parser —
+    // this test is about the parser's empty-document handling (422), so the
+    // fixture needs to clear the unrelated size floor while staying textless.
+    const blankBuffer = await createPdfBuffer([[], []]);
 
     const response = await request(app)
       .post('/api/resumes/upload')
@@ -275,7 +304,7 @@ describe('Phase 3 upload and lifecycle integration', () => {
 
     expect(deletedResume).toBeNull();
 
-    const storedFileExists = await fs.pathExists(path.join(storageDir, resume!.originalFile!.s3Key));
+    const storedFileExists = await pathExists(path.join(storageDir, resume!.originalFile!.s3Key));
     expect(storedFileExists).toBe(false);
   });
 });

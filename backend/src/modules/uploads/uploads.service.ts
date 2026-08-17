@@ -362,34 +362,31 @@ export class UploadService {
   }
 
   private normalizeUploadError(error: unknown): { code: FileValidationErrorCode; message: string } {
+    // Errors thrown with an explicit .code (file validation, parser, quota, storage)
+    // already carry an accurate diagnosis — pass them through unchanged.
     if (error && typeof error === 'object' && 'code' in error && 'message' in error) {
       const typedError = error as { code: string; message: string }
-
-      if (typedError.code === FileValidationErrorCode.PARSER_FAILED || typedError.code === FileValidationErrorCode.EMPTY_DOCUMENT || typedError.code === FileValidationErrorCode.SCANNED_PDF_NOT_SUPPORTED) {
-        return {
-          code: typedError.code as FileValidationErrorCode,
-          message: typedError.message,
-        }
-      }
-
       return {
         code: typedError.code as FileValidationErrorCode,
         message: typedError.message,
       }
     }
 
-    if (error instanceof Error) {
-      // Do NOT propagate raw error.message here — it may contain parser worker stderr,
-      // temp file paths, or stdout snippets which should never reach the client.
-      return {
-        code: FileValidationErrorCode.PARSER_FAILED,
-        message: 'Unable to process resume file. Please ensure it is a valid, uncorrupted PDF or DOCX.',
-      }
-    }
+    // Anything reaching here is an *uncoded* exception — a bug anywhere in the
+    // upload pipeline (DB write, JSON serialization, quota math, audit logging),
+    // not necessarily a bad file. Log the real error server-side (never sent to
+    // the client) so it's diagnosable, and use a distinct INTERNAL_ERROR code
+    // rather than PARSER_FAILED so this class of failure isn't misreported as
+    // "invalid PDF/DOCX" in metrics, logs, or the audit trail.
+    logger.error('Unclassified upload pipeline error', {
+      errorMessage: error instanceof Error ? error.message : String(error),
+      errorName: error instanceof Error ? error.name : undefined,
+      stack: error instanceof Error ? error.stack : undefined,
+    })
 
     return {
-      code: FileValidationErrorCode.PARSER_FAILED,
-      message: 'Upload processing failed',
+      code: FileValidationErrorCode.INTERNAL_ERROR,
+      message: 'Upload failed due to an unexpected error. Please try again.',
     }
   }
 

@@ -18,6 +18,17 @@ module.exports = {
   },
   testEnvironment: 'node',
   testTimeout: 15000,
+  // The DB-backed integration suites (tests/integration/*.integration.test.ts)
+  // share one PostgreSQL database and each does a global deleteMany() reset in
+  // beforeEach/beforeAll with no per-suite isolation (no schema-per-worker, no
+  // transactional wrapping). Jest's default parallel workers are separate
+  // processes hitting that same database concurrently, so one suite's reset
+  // truncates data another suite's in-flight test depends on, producing
+  // order-dependent failures (wrong HTTP status, occasional 500s) that have
+  // nothing to do with the code under test. Serializing test files removes the
+  // race without introducing per-worker infrastructure (Redis, schema
+  // provisioning, etc.), which is out of scope for what these tests need.
+  maxWorkers: 1,
   roots: ['<rootDir>/tests', '<rootDir>/src'],
   testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
   moduleNameMapper: {

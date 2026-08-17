@@ -336,7 +336,7 @@ export const ResumeDetailPage: React.FC = () => {
                   <div className="flex flex-wrap gap-2 text-xs">
                     {languages.map((l: any, i: number) => (
                       <span key={i} className="px-2.5 py-1 bg-slate-100 rounded-lg text-slate-700 font-medium">
-                        {typeof l === 'string' ? l : `${l.language}${l.proficiency ? ` (${l.proficiency})` : ''}`}
+                        {typeof l === 'string' ? l : `${l.name}${l.proficiency ? ` (${l.proficiency})` : ''}`}
                       </span>
                     ))}
                   </div>

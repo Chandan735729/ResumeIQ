@@ -50,8 +50,12 @@ export class LocalFileStorage implements IFileStorage {
       // Write file to disk
       await fs.writeFile(filePath, fileBuffer)
 
-      // Return relative key for storage
-      const fileKey = path.relative(this.baseDir, filePath)
+      // Return relative key for storage. Normalize to forward slashes so the
+      // key is a stable, portable identifier (matches S3 key conventions and
+      // the `file:///${fileKey}` URL built from it) regardless of host OS —
+      // path.relative returns backslashes on Windows, which would otherwise
+      // leak into s3Key/s3Url and any URL built from it.
+      const fileKey = path.relative(this.baseDir, filePath).split(path.sep).join('/')
       return fileKey
     } catch (error) {
       throw new Error(`Failed to upload file: ${(error as Error).message}`)
@@ -75,7 +79,11 @@ export class LocalFileStorage implements IFileStorage {
       const resolvedPath = path.resolve(filePath)
       const resolvedUserDir = path.resolve(userDir)
       
-      if (!resolvedPath.startsWith(resolvedUserDir)) {
+      // A bare prefix check without a trailing separator is bypassable: a
+      // sibling directory like "users/user1-evil" also starts with the
+      // string "users/user1". Requiring an exact match or a match followed
+      // by the OS path separator closes that gap.
+      if (resolvedPath !== resolvedUserDir && !resolvedPath.startsWith(resolvedUserDir + path.sep)) {
         throw new Error('Access denied: File not in user directory')
       }
 
@@ -103,7 +111,11 @@ export class LocalFileStorage implements IFileStorage {
       const resolvedPath = path.resolve(filePath)
       const resolvedUserDir = path.resolve(userDir)
       
-      if (!resolvedPath.startsWith(resolvedUserDir)) {
+      // A bare prefix check without a trailing separator is bypassable: a
+      // sibling directory like "users/user1-evil" also starts with the
+      // string "users/user1". Requiring an exact match or a match followed
+      // by the OS path separator closes that gap.
+      if (resolvedPath !== resolvedUserDir && !resolvedPath.startsWith(resolvedUserDir + path.sep)) {
         throw new Error('Access denied: File not in user directory')
       }
 
@@ -127,7 +139,11 @@ export class LocalFileStorage implements IFileStorage {
       const resolvedPath = path.resolve(filePath)
       const resolvedUserDir = path.resolve(userDir)
       
-      if (!resolvedPath.startsWith(resolvedUserDir)) {
+      // A bare prefix check without a trailing separator is bypassable: a
+      // sibling directory like "users/user1-evil" also starts with the
+      // string "users/user1". Requiring an exact match or a match followed
+      // by the OS path separator closes that gap.
+      if (resolvedPath !== resolvedUserDir && !resolvedPath.startsWith(resolvedUserDir + path.sep)) {
         return false
       }
 
