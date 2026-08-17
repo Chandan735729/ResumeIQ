@@ -2,10 +2,20 @@
  * Unit Tests: PDF Resume Generator & PDF Quality Validation
  */
 
-import pdfParse from 'pdf-parse';
+import { extractPdfText } from '@services/resumeParser.service';
 import { PdfGeneratorService } from '@services/documents/pdfGenerator.service';
 import { validateGeneratedDocument } from '@services/documents/documentValidator';
 import type { ResumeMatchInput } from '@services/matchingEngine.service';
+
+// Round-trip verification uses the same pdfjs-dist-based extractor the
+// production parser uses (extractPdfText), not the raw `pdf-parse` package --
+// pdf-parse bundles an old pdfjs build with an intermittent XRef-table race
+// that fails on ~50% of otherwise well-formed PDFKit output (see
+// documentValidator.ts for the full root-cause note), which made this test
+// flaky.
+async function extractText(buffer: Buffer): Promise<string> {
+  return (await extractPdfText(buffer)).rawText;
+}
 
 describe('PDF Document Generation', () => {
   const pdfGenerator = new PdfGeneratorService();
@@ -77,15 +87,15 @@ describe('PDF Document Generation', () => {
     expect(validation.errors).toHaveLength(0);
     expect(validation.extractedTextLength).toBeGreaterThan(100);
 
-    // Verify text can be extracted back with pdf-parse
-    const parsed = await pdfParse(result.buffer);
-    expect(parsed.text).toContain('Alex Rivera');
-    expect(parsed.text).toContain('alex.rivera@example.com');
-    expect(parsed.text).toContain('Senior Software Engineer');
-    expect(parsed.text).toContain('Cloud Corp');
-    expect(parsed.text).toContain('TypeScript');
-    expect(parsed.text).toContain('Bachelor of Science');
-    expect(parsed.text).toContain('AWS Certified Solutions Architect');
+    // Verify text can be extracted back
+    const text = await extractText(result.buffer);
+    expect(text).toContain('Alex Rivera');
+    expect(text).toContain('alex.rivera@example.com');
+    expect(text).toContain('Senior Software Engineer');
+    expect(text).toContain('Cloud Corp');
+    expect(text).toContain('TypeScript');
+    expect(text).toContain('Bachelor of Science');
+    expect(text).toContain('AWS Certified Solutions Architect');
   });
 
   it('handles multi-page long resume without clipping or crashing', async () => {
@@ -113,9 +123,9 @@ describe('PDF Document Generation', () => {
     });
 
     expect(result.pageCount).toBeGreaterThanOrEqual(2);
-    const parsed = await pdfParse(result.buffer);
-    expect(parsed.text).toContain('Staff Engineer Level 1');
-    expect(parsed.text).toContain('Staff Engineer Level 8');
+    const text = await extractText(result.buffer);
+    expect(text).toContain('Staff Engineer Level 1');
+    expect(text).toContain('Staff Engineer Level 8');
   });
 
   it('renders Unicode characters correctly', async () => {

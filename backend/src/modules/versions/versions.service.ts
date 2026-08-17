@@ -258,10 +258,17 @@ export async function downloadVersion(
       rawText: version.optimizedText,
     };
 
+    const parsedName = resumeInput.contact?.fullName?.trim();
+    const candidateName = parsedName && parsedName.length > 0
+      ? parsedName
+      : resume.fileName.replace(/\.[^/.]+$/, '');
+
     const docResult = await documentGenerationService.generateAndStoreDocument(userId, resumeInput, {
       format,
-      candidateName: resume.fileName.replace(/\.[^/.]+$/, ''),
-      summary: version.optimizedText.slice(0, 300),
+      candidateName,
+      contactEmail: resumeInput.contact?.email,
+      contactPhone: resumeInput.contact?.phone,
+      summary: resumeInput.summary || version.optimizedText.slice(0, 300),
     });
 
     fileBuffer = docResult.buffer;

@@ -45,7 +45,9 @@ export function applyChangesToResume(
     ...exp,
     bullets: [...exp.bullets],
   }));
-  const updatedProjects = [...originalResume.projectTechnologies];
+  const updatedProjectTechnologies = [...originalResume.projectTechnologies];
+  const updatedProjectItems = (originalResume.projects ?? []).map(p => ({ ...p }));
+  let updatedSummary = originalResume.summary;
 
   const changeDiffs: ChangeDiffItem[] = [];
 
@@ -79,6 +81,21 @@ export function applyChangesToResume(
       if (!updatedSkills.includes(change.suggested)) {
         updatedSkills.push(change.suggested);
       }
+    } else if (change.section === 'summary') {
+      if (updatedSummary && updatedSummary.includes(change.original)) {
+        updatedSummary = updatedSummary.replace(change.original, change.suggested);
+      } else if (updatedSummary) {
+        updatedSummary = `${updatedSummary}\n${change.suggested}`;
+      } else {
+        updatedSummary = change.suggested;
+      }
+    } else if (change.section === 'projects') {
+      for (const proj of updatedProjectItems) {
+        if (proj.description && proj.description.includes(change.original)) {
+          proj.description = proj.description.replace(change.original, change.suggested);
+          break;
+        }
+      }
     }
 
     changeDiffs.push({
@@ -108,6 +125,7 @@ export function applyChangesToResume(
 
   if (summarySuggestion && summarySuggestion.trim().length > 0) {
     updatedRawText = `${summarySuggestion.trim()}\n\n${updatedRawText}`;
+    updatedSummary = summarySuggestion.trim();
   }
 
   const optimizedLayout: ResumeMatchInput = {
@@ -115,8 +133,13 @@ export function applyChangesToResume(
     experience: updatedExperience,
     education: originalResume.education,
     certifications: originalResume.certifications,
-    projectTechnologies: updatedProjects,
+    projectTechnologies: updatedProjectTechnologies,
     rawText: updatedRawText,
+    contact: originalResume.contact,
+    summary: updatedSummary,
+    projects: updatedProjectItems,
+    languages: originalResume.languages,
+    sectionOrder: originalResume.sectionOrder,
   };
 
   return {

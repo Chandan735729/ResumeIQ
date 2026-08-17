@@ -7,6 +7,7 @@
 
 import { resolveCanonical, skillMentionedInText, SKILL_ALIAS_MAP } from '../../skillAliases';
 import type { RawOptimizationChange } from './schemaValidator';
+import type { OptimizationType } from '../../../modules/optimization/optimization.types';
 
 export interface ValidatedChange extends RawOptimizationChange {
   isApproved: boolean;
@@ -98,12 +99,38 @@ export function extractCertsFromText(text: string): Set<string> {
 }
 
 /**
+ * Word-level Jaccard distance between two strings (0 = identical word sets, 1 = disjoint).
+ * Used to bound how much a single change is allowed to rewrite in conservative mode.
+ */
+export function wordDriftRatio(original: string, suggested: string): number {
+  const tokenize = (s: string): Set<string> =>
+    new Set(
+      s
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/gi, ' ')
+        .split(/\s+/)
+        .filter(Boolean)
+    );
+  const a = tokenize(original);
+  const b = tokenize(suggested);
+  if (a.size === 0 && b.size === 0) return 0;
+  let intersection = 0;
+  for (const w of a) if (b.has(w)) intersection++;
+  const union = new Set([...a, ...b]).size;
+  return union === 0 ? 0 : 1 - intersection / union;
+}
+
+/** Maximum allowed word-level drift for a single change in conservative mode. */
+export const CONSERVATIVE_MAX_DRIFT = 0.5;
+
+/**
  * Check a single proposed change against the original resume content
  */
 export function factCheckChange(
   change: RawOptimizationChange,
   originalResumeText: string,
-  originalResumeSkills: string[]
+  originalResumeSkills: string[],
+  optimizationType?: OptimizationType
 ): { isApproved: boolean; rejectionReason?: string } {
   // 1. Check for fabricated certifications
 
@@ -146,6 +173,19 @@ export function factCheckChange(
     }
   }
 
+  // 4. Conservative mode: bound how much a single change is allowed to reword.
+  // This is deterministic and additive — it never relaxes checks 1-3, it only
+  // ever tightens behavior, and only for conservative mode.
+  if (optimizationType === 'conservative') {
+    const drift = wordDriftRatio(change.original, change.suggested);
+    if (drift > CONSERVATIVE_MAX_DRIFT) {
+      return {
+        isApproved: false,
+        rejectionReason: `CONSERVATIVE_MODE_EXCESSIVE_REWRITE: Proposed change rewrites ${Math.round(drift * 100)}% of the wording, which exceeds the conservative-mode limit of ${Math.round(CONSERVATIVE_MAX_DRIFT * 100)}%.`,
+      };
+    }
+  }
+
   return { isApproved: true };
 }
 
@@ -155,14 +195,15 @@ export function factCheckChange(
 export function runFactGuardrails(
   changes: RawOptimizationChange[],
   originalResumeText: string,
-  originalResumeSkills: string[] = []
+  originalResumeSkills: string[] = [],
+  optimizationType?: OptimizationType
 ): FactCheckReport {
   const approvedChanges: ValidatedChange[] = [];
   const rejectedChanges: ValidatedChange[] = [];
   const warnings: string[] = [];
 
   for (const change of changes) {
-    const check = factCheckChange(change, originalResumeText, originalResumeSkills);
+    const check = factCheckChange(change, originalResumeText, originalResumeSkills, optimizationType);
     if (check.isApproved) {
       approvedChanges.push({ ...change, isApproved: true });
     } else {

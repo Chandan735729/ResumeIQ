@@ -12,8 +12,33 @@
 
 import type { OptimizationPromptContext } from '../aiProvider.interface';
 import type { MatchResult } from '../../matchingEngine.service';
+import type { OptimizationType } from '../../../modules/optimization/optimization.types';
 
 export const CURRENT_PROMPT_VERSION = 'optimization-v1';
+
+/**
+ * Mode-specific guidance injected into the user prompt. All three modes remain
+ * bound by the fact-preservation rules in SYSTEM_INSTRUCTION_V1 — the modes
+ * only change *what kind* of allowed edits are prioritized, never whether
+ * fabrication is allowed.
+ */
+export const MODE_GUIDANCE: Record<OptimizationType, string> = {
+  conservative: `MODE: CONSERVATIVE
+- Make the smallest possible wording/grammar edits needed for clarity. Do NOT restructure sentences, reorder bullets, or change tone.
+- Prefer leaving a bullet unchanged over rewriting it, unless it is genuinely unclear or contains a typo/grammar error.
+- Do NOT add keywords, even evidenced ones, unless they are already stated in that exact bullet's original wording.
+- Treat every proposed change as high-cost: only propose a change when it is clearly necessary.`,
+  ats_focused: `MODE: ATS-FOCUSED
+- Prioritize surfacing skills/keywords the candidate ALREADY has evidence for elsewhere in the resume (per "Fully Matched" and "Partially Matched" findings below) more explicitly in relevant bullets and the summary.
+- Where a partially-matched or contextual skill is only implied, make it explicit using the candidate's own evidenced wording.
+- Never introduce a missing required/preferred skill or keyword unless it is independently evidenced somewhere else in the candidate's resume text.
+- Favor precise, literal keyword phrasing over stylistic language when both are truthful.`,
+  recruiter_focused: `MODE: RECRUITER-FOCUSED
+- Prioritize human readability and impact: strong action verbs, concise phrasing, and quantifiable outcomes already present in the resume.
+- Do not stack keywords or make bullets read like a list of buzzwords.
+- Elevate genuine achievements over routine duties where the resume already supports it.
+- The professional summary should read naturally, as if written for a human recruiter skimming in 6 seconds.`,
+};
 
 export const SYSTEM_INSTRUCTION_V1 = `You are the ResumeIQ AI Optimization Assistant. Your sole purpose is to help candidates improve the wording, clarity, and keyword alignment of their resumes against target job descriptions.
 
@@ -44,7 +69,8 @@ export function buildOptimizationPrompt(
   resumeText: string,
   jdText: string,
   matchResult: MatchResult,
-  promptVersion: string = CURRENT_PROMPT_VERSION
+  promptVersion: string = CURRENT_PROMPT_VERSION,
+  optimizationType: OptimizationType = 'conservative'
 ): OptimizationPromptContext {
   const matchedSkills = matchResult.matched.map(r => r.requirement.label);
   const partialSkills = matchResult.partial.map(r => r.requirement.label);
@@ -65,6 +91,9 @@ export function buildOptimizationPrompt(
   };
 
   const userPrompt = `TASK: Optimize the candidate's resume content to better align with the job description based on the deterministic ATS findings below.
+
+=== OPTIMIZATION MODE GUIDANCE ===
+${MODE_GUIDANCE[optimizationType]}
 
 === DETERMINISTIC ATS FINDINGS ===
 - Fully Matched Skills (Preserve & Emphasize): ${matchedSkills.length > 0 ? matchedSkills.join(', ') : 'None'}
@@ -111,6 +140,7 @@ Return a single JSON object with the following structure:
     userPrompt,
     untrustedResumeData: resumeText,
     untrustedJobDescription: jdText,
+    optimizationType,
     deterministicFindings,
   };
 }

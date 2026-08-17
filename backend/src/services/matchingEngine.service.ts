@@ -16,6 +16,9 @@ import type {
   IExperienceItem,
   IEducationItem,
   ICertificationItem,
+  IContactInfo,
+  IProjectItem,
+  ILanguageItem,
 } from '../types';
 import {
   findSkillMatch,
@@ -88,6 +91,17 @@ export interface ResumeMatchInput {
   projectTechnologies: string[];
   /** Full extracted raw text of the resume */
   rawText: string;
+  /**
+   * The following fields are not used by deterministic matching/scoring —
+   * they exist so the same structure can flow unmodified through
+   * optimize -> export without the document generators losing content.
+   */
+  contact?: IContactInfo;
+  summary?: string;
+  projects?: IProjectItem[];
+  languages?: ILanguageItem[];
+  /** Section order (by ParsedSectionType) as it appeared in the source resume */
+  sectionOrder?: string[];
 }
 
 export interface MatchResult {
@@ -509,6 +523,15 @@ export function layoutToMatchInput(
     const projectTechnologies: string[] = (layout.projects ?? []).flatMap(
       (p: { technologies?: string[] }) => p.technologies ?? [],
     );
+    const sectionOrder: string[] = Array.isArray(layout.sections)
+      ? Array.from(
+          new Set(
+            (layout.sections as Array<{ type?: string }>)
+              .map((s) => s.type)
+              .filter((t): t is string => typeof t === 'string' && t.length > 0),
+          ),
+        )
+      : [];
     return {
       skills: layout.skills ?? [],
       experience: layout.experience ?? [],
@@ -516,6 +539,11 @@ export function layoutToMatchInput(
       certifications: layout.certifications ?? [],
       projectTechnologies,
       rawText,
+      contact: layout.contact ?? undefined,
+      summary: layout.summary ?? undefined,
+      projects: layout.projects ?? [],
+      languages: layout.languages ?? [],
+      sectionOrder,
     };
   } catch {
     return null;

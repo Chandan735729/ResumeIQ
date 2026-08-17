@@ -25,6 +25,101 @@ export type MockScenario =
   | 'server_error'
   | 'custom';
 
+/**
+ * Weak-verb -> stronger-synonym allow-list for the recruiter-focused mode.
+ * These are style swaps only (no new facts/skills), so they never trip the
+ * fact guardrail.
+ */
+const RECRUITER_VERB_SWAPS: Record<string, string> = {
+  worked: 'delivered',
+  helped: 'drove',
+  responsible: 'accountable',
+  did: 'executed',
+  made: 'built',
+  handled: 'managed',
+  assisted: 'supported',
+};
+
+/**
+ * Picks a real, non-trivial line/sentence from the candidate's own resume
+ * text to base a mock edit on. Prefers newline-delimited lines (how real
+ * parsed resume text is structured); falls back to sentence-splitting for
+ * single-line text blobs (e.g. some synthetic test fixtures).
+ */
+function pickSourceLine(resumeText: string): string | null {
+  const isCandidate = (l: string) => l.length >= 25 && l.length <= 220 && /[a-z]/i.test(l) && / /.test(l);
+
+  const lines = resumeText
+    .split(/\r?\n/)
+    .map(l => l.trim())
+    .filter(isCandidate);
+  const fromLines = lines.find(l => l !== l.toUpperCase());
+  if (fromLines) return fromLines;
+  if (lines.length > 0) return lines[0];
+
+  const sentences = resumeText
+    .split(/(?<=[.!?])\s+/)
+    .map(s => s.trim())
+    .filter(isCandidate);
+  if (sentences.length > 0) return sentences[0];
+
+  return null;
+}
+
+/** Builds a mode-specific, evidence-safe transformation of a real resume line. */
+function transformLine(
+  line: string,
+  optimizationType: 'conservative' | 'ats_focused' | 'recruiter_focused',
+  deterministicFindings: OptimizationPromptContext['deterministicFindings'],
+  resumeText: string
+): { suggested: string; reason: string; evidence: string[] } {
+  if (optimizationType === 'conservative') {
+    const normalized = line.replace(/\s{2,}/g, ' ').replace(/\s+([.,])/g, '$1');
+    const suggested = /[.!?]$/.test(normalized) ? normalized : `${normalized}.`;
+    return {
+      suggested,
+      reason: 'Minor grammar/formatting normalization only (conservative mode).',
+      evidence: [line],
+    };
+  }
+
+  if (optimizationType === 'recruiter_focused') {
+    const firstWord = line.split(/\s+/)[0]?.toLowerCase().replace(/[^a-z]/g, '') || '';
+    const swap = RECRUITER_VERB_SWAPS[firstWord];
+    if (swap) {
+      const rest = line.slice(line.indexOf(' ') + 1);
+      const capitalized = swap.charAt(0).toUpperCase() + swap.slice(1);
+      return {
+        suggested: `${capitalized} ${rest}`,
+        reason: `Replaced a weak verb ("${firstWord}") with a stronger action verb for recruiter readability.`,
+        evidence: [line],
+      };
+    }
+    return {
+      suggested: line,
+      reason: 'Bullet already reads clearly for a human reviewer; no change needed.',
+      evidence: [line],
+    };
+  }
+
+  // ats_focused: weave in an already-evidenced partial/matched skill if it's not already in this line.
+  const candidateSkill = [...deterministicFindings.partialSkills, ...deterministicFindings.matchedSkills].find(
+    skill => resumeText.toLowerCase().includes(skill.toLowerCase()) && !line.toLowerCase().includes(skill.toLowerCase())
+  );
+  if (candidateSkill) {
+    return {
+      suggested: `${line} (${candidateSkill})`,
+      reason: `Made the evidenced skill "${candidateSkill}" explicit to improve ATS keyword alignment.`,
+      evidence: [line, candidateSkill],
+    };
+  }
+  return {
+    suggested: line,
+    reason: 'Relevant skills are already explicit in this bullet.',
+    evidence: [line],
+  };
+}
+
 export class MockAIProvider implements IAIProvider {
   public readonly providerName = 'MockAIProvider';
   private scenario: MockScenario;
@@ -45,7 +140,7 @@ export class MockAIProvider implements IAIProvider {
   }
 
   async generateOptimization(
-    _context: OptimizationPromptContext,
+    context: OptimizationPromptContext,
     options?: AIProviderOptions
   ): Promise<AIProviderResponse> {
 
@@ -135,35 +230,54 @@ export class MockAIProvider implements IAIProvider {
         };
 
       case 'success_standard':
-      default:
+      default: {
+        // Content-derived (not statically hardcoded): picks a real line out of
+        // the actual candidate resume text and applies a small, mode-specific,
+        // evidence-safe transformation. This lets the 3 optimization modes be
+        // demonstrated end-to-end against arbitrary real resumes without a
+        // live provider — a fully static canned response would only
+        // coincidentally pass the fact guardrail for the one resume text it
+        // was hand-written for.
+        const optimizationType = context.optimizationType || 'conservative';
+        const sourceLine = pickSourceLine(context.untrustedResumeData);
+
+        const changes: Array<{
+          section: 'experience';
+          itemId: string;
+          original: string;
+          suggested: string;
+          reason: string;
+          evidence: string[];
+        }> = [];
+
+        if (sourceLine) {
+          const { suggested, reason, evidence } = transformLine(
+            sourceLine,
+            optimizationType,
+            context.deterministicFindings,
+            context.untrustedResumeData
+          );
+          changes.push({
+            section: 'experience',
+            itemId: 'bullet-1',
+            original: sourceLine,
+            suggested,
+            reason,
+            evidence,
+          });
+        }
+
         return {
           rawContent: JSON.stringify({
-            summarySuggestion: 'Experienced Backend Engineer specializing in Python and PostgreSQL REST API architecture.',
-            changes: [
-              {
-                section: 'experience',
-                itemId: 'bullet-1',
-                original: 'Built APIs with Python.',
-                suggested: 'Designed and implemented scalable REST APIs using Python and PostgreSQL.',
-                reason: 'Aligned terminology with target job requirements using evidenced skills',
-                evidence: ['Python', 'PostgreSQL'],
-              },
-              {
-                section: 'skills',
-                itemId: 'skill-1',
-                original: 'Python',
-                suggested: 'Python',
-                reason: 'Emphasized primary language',
-                evidence: ['Python'],
-              },
-            ],
-            preservedFacts: ['Python', 'PostgreSQL', 'Computer Science degree'],
-            warnings: ['Candidate lacks AWS experience required by job.'],
+            changes,
+            preservedFacts: [],
+            warnings: sourceLine ? [] : ['Mock provider found no suitable resume line to optimize.'],
           }),
           model: options?.model || 'gemini-mock',
           durationMs: Date.now() - startTime,
           tokenUsage: { promptTokens: 400, completionTokens: 150, totalTokens: 550 },
         };
+      }
     }
   }
 }

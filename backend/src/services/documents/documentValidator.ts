@@ -3,10 +3,21 @@
  *
  * Verifies that generated PDF and DOCX files are non-empty, well-formed,
  * have valid magic bytes, and can be successfully parsed back by standard parsers.
+ *
+ * PDF re-extraction uses the same pdfjs-dist-based extractor the production
+ * resume parser uses (extractPdfText), not the raw `pdf-parse` package
+ * directly. Root cause: `pdf-parse` bundles a very old (2018-era) pdfjs
+ * build whose XRef-table reader has an intermittent race that fails on a
+ * large fraction of otherwise well-formed PDFKit-generated PDFs -- byte-for-
+ * byte identical documents (differing only in the random /ID) would parse
+ * successfully about half the time and fail with "bad XRef entry" the other
+ * half. This is already documented and worked around on the parsing side
+ * (see resumeParser.service.ts's extractPdfText comment); the export
+ * validator had not been updated to use the same reliable path.
  */
 
-import pdfParse from 'pdf-parse';
 import mammoth from 'mammoth';
+import { extractPdfText } from '../resumeParser.service';
 import type { GeneratedDocumentResult, DocumentFormat } from './document.interface';
 
 export interface DocumentValidationResult {
@@ -14,6 +25,7 @@ export interface DocumentValidationResult {
   format: DocumentFormat;
   fileSizeBytes: number;
   extractedTextLength: number;
+  extractedText: string;
   errors: string[];
 }
 
@@ -30,6 +42,7 @@ export async function validateGeneratedDocument(
       format: docResult.format,
       fileSizeBytes: 0,
       extractedTextLength: 0,
+      extractedText: '',
       errors: ['Document buffer is null or invalid.'],
     };
   }
@@ -39,6 +52,7 @@ export async function validateGeneratedDocument(
   }
 
   let extractedTextLength = 0;
+  let extractedText = '';
 
   // 2. Format-specific header and parser validation
   if (docResult.format === 'pdf') {
@@ -50,8 +64,9 @@ export async function validateGeneratedDocument(
 
     // Verify PDF can be parsed
     try {
-      const parsedPdf = await pdfParse(buffer);
-      extractedTextLength = parsedPdf.text.length;
+      const parsedPdf = await extractPdfText(buffer);
+      extractedText = parsedPdf.rawText;
+      extractedTextLength = parsedPdf.rawText.length;
       if (extractedTextLength === 0) {
         errors.push('PDF generator produced an empty document with 0 extracted characters.');
       }
@@ -68,6 +83,7 @@ export async function validateGeneratedDocument(
     // Verify DOCX can be parsed
     try {
       const docxParsed = await mammoth.extractRawText({ buffer });
+      extractedText = docxParsed.value;
       extractedTextLength = docxParsed.value.length;
       if (extractedTextLength === 0) {
         errors.push('DOCX generator produced an empty document with 0 extracted characters.');
@@ -84,6 +100,7 @@ export async function validateGeneratedDocument(
     format: docResult.format,
     fileSizeBytes: buffer.length,
     extractedTextLength,
+    extractedText,
     errors,
   };
 }

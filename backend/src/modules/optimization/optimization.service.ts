@@ -168,12 +168,15 @@ export async function optimizeResume(
   const beforeMatchResult = matchResumeToJob(resumeInput, structuredJD);
   const beforeScoreResult = computeATSScore(beforeMatchResult);
 
+  const optimizationType = dto.optimizationType || 'conservative';
+
   // 7. Build structured prompt (treating resume/JD as untrusted data)
   const promptContext = buildOptimizationPrompt(
     resumeText,
     jdText,
     beforeMatchResult,
-    CURRENT_PROMPT_VERSION
+    CURRENT_PROMPT_VERSION,
+    optimizationType
   );
 
   // 8. Generate optimization via provider
@@ -209,7 +212,8 @@ export async function optimizeResume(
   const factReport = runFactGuardrails(
     schemaValidation.data.changes,
     resumeInput.rawText,
-    resumeInput.skills
+    resumeInput.skills,
+    optimizationType
   );
 
   // 11. Apply approved changes to generate optimized text and layout
@@ -233,17 +237,20 @@ export async function optimizeResume(
   });
   const versionNumber = existingVersionCount + 1;
 
-  const optimizationType = dto.optimizationType || 'conservative';
-
   // 14. Pre-render and store PDF & DOCX documents
   let s3PdfUrl: string | null = null;
   let s3DocxUrl: string | null = null;
-  const candidateName = resume.fileName.replace(/\.[^/.]+$/, '');
+  const parsedName = diffReport.optimizedLayout.contact?.fullName?.trim();
+  const candidateName = parsedName && parsedName.length > 0
+    ? parsedName
+    : resume.fileName.replace(/\.[^/.]+$/, '');
 
   try {
     const pdfDoc = await documentGenerationService.generateAndStoreDocument(userId, diffReport.optimizedLayout, {
       format: 'pdf',
       candidateName,
+      contactEmail: diffReport.optimizedLayout.contact?.email,
+      contactPhone: diffReport.optimizedLayout.contact?.phone,
       summary: diffReport.summarySuggestion,
     });
     s3PdfUrl = pdfDoc.fileKey;
@@ -255,6 +262,8 @@ export async function optimizeResume(
     const docxDoc = await documentGenerationService.generateAndStoreDocument(userId, diffReport.optimizedLayout, {
       format: 'docx',
       candidateName,
+      contactEmail: diffReport.optimizedLayout.contact?.email,
+      contactPhone: diffReport.optimizedLayout.contact?.phone,
       summary: diffReport.summarySuggestion,
     });
     s3DocxUrl = docxDoc.fileKey;

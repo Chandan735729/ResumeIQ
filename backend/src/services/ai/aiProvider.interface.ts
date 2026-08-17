@@ -11,6 +11,8 @@ export interface OptimizationPromptContext {
   userPrompt: string;
   untrustedResumeData: string;
   untrustedJobDescription: string;
+  /** Which of the 3 optimization modes this prompt was built for. Defaults to 'conservative' if omitted. */
+  optimizationType?: 'conservative' | 'ats_focused' | 'recruiter_focused';
   deterministicFindings: {
     matchedSkills: string[];
     partialSkills: string[];
